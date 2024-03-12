@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
 from morpheme_data import MorphemeDataLoader
 from models import *
-from torch.utils.data import DataLoader, TensorDataset
 import logging
-import string
-import pandas as pd
 import numpy as np
-import pickle
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
-import string
 import tqdm
 import yaml
 import os.path as pt
@@ -225,10 +219,11 @@ def main():
     # CHECK WORDS WE HAVE TRAINED
     print("Checking first 10 trained examples")
     print("=" * 80)
-    for word, morph in zip(data.train.words[:10], data.train.morphs[:10]):
-        pred = segment_word(word, model, data.train.word_vocab, data.train.morph_vocab, device)
+    for word, morph in zip(data.test.words[:1], data.test.morphs[:1]):
+        pred = segment_word(word, model, data.test.word_vocab, data.test.morph_vocab, device)
         print(f'word: {"".join(word[1:-1])}\n\t  pred: {pred}\n\tactual: {"".join(morph[1:-1])}')
 
+    exit(0)
     # WORDS WE HAVEN'T TRAINED
     print("Checking first 10 gold standard examples")
     print("=" * 80)

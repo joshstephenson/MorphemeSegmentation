@@ -247,3 +247,4 @@ src/translation_data/test.jsonl
 src/translation_data/train.jsonl
 src/translation_data/val.jsonl
 src/pos_test.py
+src/train.ipynb

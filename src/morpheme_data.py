@@ -5,11 +5,10 @@ import os
 import torch
 import torch.nn as nn
 import torchtext
-import numpy as np
 from datasets import Dataset
-from functools import reduce
 from typing import List
 import yaml
+import logging
 
 
 path = pt.join(pt.dirname(pt.abspath(__file__)), 'config/config.yaml')
@@ -23,37 +22,11 @@ EOS_TOKEN = config['special_tokens']['eos_token']
 
 class MorphemeDataLoader():
     class Wrapper():
-        def __init__(self, words: List[str], morph_str: List[str], morphs: List[str]):
-            self.words = words #np.reshape(words, (-1,1)).tolist()
-            self.morph_str = morph_str
+        def __init__(self, words: List[str], morphs: List[str], word_classes: List[int]):
+            self.words = words
             self.morphs = morphs
-            # print(self.words[:10])
-            # print(self.morphs[:10])
-            # exit(0)
-
+            self.word_classes = word_classes
             self.process_vocab()
-            # self.chars = set("".join(X))
-            # self.chars |= set("".join(y_orig))
-            # self.chars |= set(['<PAD>'])
-            # self.n_chars = len(self.chars)
-            # self.X, self.y = [], []
-            # longest = max(max(X, key=len), max(y_orig, key=len), key = len)
-            #
-            # for word in X:
-            #     padding = [PAD] * (len(longest) - len(word))
-            #     self.X.append(list(word)+padding)
-            # for word in y:
-            #     padding = [PAD] * (len(longest) - len(word))
-            #     self.y.append(list(word) + padding)
-            # self.char_to_ix = {c: i for i, c in enumerate(self.chars)}
-            # TODO: Refactor this
-            # self.morphemes = set()
-            # for morpheme in self.y:
-            #     for morph in morpheme.split():
-            #         self.morphemes.add(morph)
-            # self.n_morphemes = len(self.morphemes)
-            # self.morpheme_to_ix = {m: i for i, m in enumerate(self.morphemes)}
-            # print(self.morpheme_to_ix)
 
         def process_vocab(self):
             special_tokens = [
@@ -84,17 +57,8 @@ class MorphemeDataLoader():
             self.word_len = len(self.word_vocab)
             self.morph_len = len(self.morph_vocab)
 
-            # print(word_vocab["tanításokért"])
-            # print(morph_vocab["tanít"])
-            # print(morph_vocab["@@ás"])
-            # print(f'word len: {len(word_vocab)}, morph len: {len(morph_vocab)}')
-            # print(word_vocab.get_itos()[:100])
-
-            # print("here")
             ids = Dataset.from_dict({"words": [self.word_vocab.lookup_indices(token) for token in self.words], "morphs": [self.morph_vocab.lookup_indices(token) for token in self.morphs]})
             ids = ids.with_format(type = 'torch', columns = ['words', 'morphs'], output_all_columns = True)
-
-            # print(self.ids['words'][:10])
 
             def get_collate_fn(pad_index):
                 def collate_fn(batch):
@@ -122,10 +86,6 @@ class MorphemeDataLoader():
 
             self.loader = get_data_loader(ids, self.pad_index, **config['preprocessing'])
 
-        # def word_to_indices(self, chars):
-        #     lookup = [self.char_to_ix[char] for char in chars]
-        #     return lookup
-
     def __init__(self, lang = 'hun'):
         self.lang = lang
         def get_path(dset):
@@ -133,24 +93,17 @@ class MorphemeDataLoader():
 
         def get_data(path):
             if os.path.exists(path):
-                # words = []
-                # morph_strings = []
-                # morphs = []
-                # with open(path, 'r', encoding='utf') as f:
-                #     for line in f.readlines():
-                #         parts = line.split('\t')
-                #         words.append(parts[0])
-                #         morph_strings.append(parts[1])
-                #         morphs = morphs + parts[1].split()
                 table = pd.read_table(path, sep='\t', header=None)
                 table.columns = ['words', 'morph_str', 'identifier']
+
+                # Replace ' @@' morpheme marker with '@' which will make things easier
+                table['morph_str'] = table['morph_str'].str.replace(' @@', '@')
                 words = [[SOS_TOKEN] + list(w) + [EOS_TOKEN] for w in table['words'].to_numpy()]
                 morphs = [[SOS_TOKEN] + list(m) + [EOS_TOKEN] for m in table['morph_str'].to_numpy()]
-                # morphs = " ".join(table['morph_str']).split()
-                return self.Wrapper(words, table['morph_str'].to_numpy(), morphs)
+                word_classes = table['identifier'].to_numpy()
+                return self.Wrapper(words, morphs, word_classes)
             else:
                 logging.critical(f'No such file: {path}')
-                exit(1)
 
         self.train = get_data(get_path('train'))
         self.test = get_data(get_path('test.gold'))
