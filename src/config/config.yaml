@@ -10,10 +10,10 @@ preprocessing:
   initial_weights: 0.8
 
 encoder_decoder:
-  embedding_dim: 256
-  hidden_dim: 512
-  n_layers: 2
-  dropout: 0.5
+  embedding_dim: 512
+  hidden_dim: 1024
+  n_layers: 3
+  dropout: 0.2
 
 training:
   enabled: True
