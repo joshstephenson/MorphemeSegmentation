@@ -64,7 +64,6 @@ def evaluate_fn(model, data_loader, criterion, device):
 
 def main():
     data = MorphemeDataLoader(config)
-
     # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
     device = config.device()
 

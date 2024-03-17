@@ -1,6 +1,6 @@
 language: hun
 model_dir: model
-data_dir: data
+data_dir: ../2022SegmentationST/data
 model_suffix: -by_char.pt
 
 preprocessing:

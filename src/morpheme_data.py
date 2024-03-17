@@ -18,7 +18,8 @@ class MorphemeDataLoader:
         self.lang = config['language']
 
         def get_path(dset):
-            return pt.join(pt.dirname(pt.abspath(__file__)), f'data/{self.lang}.word.{dset}.tsv')
+            data_dir = config['data_dir']
+            return pt.join(pt.dirname(pt.abspath(__file__)), data_dir, f'{self.lang}.word.{dset}.tsv')
 
         def get_data(path):
             if os.path.exists(path):
