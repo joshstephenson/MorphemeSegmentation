@@ -1,30 +1,12 @@
 # -*- coding: utf-8 -*-
 from morpheme_data import MorphemeDataLoader
 from models import *
-import logging
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import tqdm
-import yaml
-import os.path as pt
-from Levenshtein import distance
-from sklearn.metrics import f1_score
+from config import Config
 
-# Load the configuration
-config_file = 'config.yaml'
-try:
-    path = pt.join(pt.dirname(pt.abspath(__file__)), 'config', config_file)
-    with open(path, 'r') as f:
-        config = yaml.load(f, Loader = yaml.FullLoader)
-# On a hosted environment, this is likely to work, but the above will not
-except Exception as e:
-    path = 'config/' + config_file
-    with open(path, 'r') as f:
-        config = yaml.load(f, Loader = yaml.FullLoader)
-
-assert config is not None
+config = Config()
 
 LANGUAGE = config['language']
 UNKNOWN_TOKEN = config['special_tokens']['unknown_token']
@@ -32,23 +14,7 @@ PAD_TOKEN = config['special_tokens']['pad_token']
 SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
-# Make sure we have a place to store the generated model
-model_file = LANGUAGE + '-' + config['model_suffix']
-try:
-    file = pt.join(pt.dirname(pt.abspath(__file__)), config['model_dir'], model_file)
-except Exception as e:
-    file = config['model_dir'] + '/' + model_file
-model_file = file
-assert model_file is not None
-
-LOG_FORMAT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-logging.basicConfig(format = LOG_FORMAT, level = getattr(logging, 'INFO'))
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-def init_weights(m, initial = config['preprocessing']['initial_weights']):
-    for name, param in m.named_parameters():
-        nn.init.uniform_(param.data, -initial, initial)
+model_file = config.model_file
 
 def train_fn(model, data_loader, optimizer, criterion, device, **kwargs):
     model.train()
@@ -96,95 +62,23 @@ def evaluate_fn(model, data_loader, criterion, device):
             epoch_loss += loss.item()
     return epoch_loss / len(data_loader)
 
-def segment_word(word, model, word_vocab, morph_vocab, device, max_output_length = config['predictions']['max_output']):
-    model.eval()
-    with torch.no_grad():
-        # if lower:
-        #     tokens = [token.lower() for token in tokens]
-        word_ids = word_vocab.lookup_indices(list(word))
-        word_tensor = torch.LongTensor(word_ids).unsqueeze(-1).to(device)
-        hidden, cell = model.encoder(word_tensor)
-        input_ids = morph_vocab.lookup_indices([SOS_TOKEN])
-        last_index = None
-        for _ in range(max_output_length):
-            inputs_tensor = torch.LongTensor([input_ids[-1]]).to(device)
-            output, hidden, cell = model.decoder(inputs_tensor, hidden, cell)
-            predicted_token = output.argmax(-1).item()
-            input_ids.append(predicted_token)
-            if predicted_token == morph_vocab[EOS_TOKEN]:
-                last_index = -1
-                break
-        tokens = morph_vocab.lookup_tokens(input_ids)
-    prediction = ("".join(tokens[1:last_index]))
-    return prediction
-
-def find_f1(words, expectations, model, word_vocab, morph_vocab, device, max_output_length = config['predictions']['max_output']):
-    model.eval()
-    distances = []
-    with torch.no_grad():
-        for i, (word, expectation) in enumerate(zip(words, expectations)):
-            with torch.no_grad():
-                word_ids = word_vocab.lookup_indices(list(word))
-                expected_ids = morph_vocab.lookup_indices(list(expectation))
-                word_tensor = torch.LongTensor(word_ids).unsqueeze(-1).to(device)
-                hidden, cell = model.encoder(word_tensor)
-                input_ids = morph_vocab.lookup_indices([SOS_TOKEN])
-                last_index = None
-                for _ in range(max_output_length):
-                    inputs_tensor = torch.LongTensor([input_ids[-1]]).to(device)
-                    output, hidden, cell = model.decoder(inputs_tensor, hidden, cell)
-                    predicted_token = output.argmax(-1).item()
-                    input_ids.append(predicted_token)
-                    if predicted_token == morph_vocab[EOS_TOKEN]:
-                        last_index = -1
-                        break
-                tokens = morph_vocab.lookup_tokens(input_ids)
-                prediction = ("".join(tokens[1:last_index]))
-            expectation = ("".join(expectation[1:-1]))
-            d = distance(expectation, prediction) + 1
-            if i % 10 == 0:
-                logger.info(f'i: {i}, expectation: {expectation}, prediction: {prediction}, d: {d}')
-            distances.append(d)
-    return np.average(f1_score([1] * len(distances), distances, average = 'macro'))
-
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
 def main():
-    data = MorphemeDataLoader(LANGUAGE)
-    input_dim = data.train.word_len
-    output_dim = data.train.morph_len
+    data = MorphemeDataLoader(config)
 
-    device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cuda")
-    if torch.backends.mps.is_available() or torch.cuda.is_available():
-        print("GPU ENABLED √")
-    else:
-        print("NO GPU ACCESS. EXITING.")
-        exit(1)
+    # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+    device = config.device()
 
-    encoder = Encoder(
-        input_dim,
-        **config['encoder']
-    )
-    decoder = Decoder(
-        output_dim,
-        **config['decoder']
-    )
-    model = Seq2Seq(encoder, decoder, device).to(device)
+    model = Seq2Seq(data.train, device, config).to(device)
+    print(model)
 
-    if config['training']['enabled']:
-        model.apply(init_weights)
-
-    print(f"The model has {count_parameters(model):,} trainable parameters")
-
-    optimizer = optim.Adam(model.parameters())
-    criterion = nn.CrossEntropyLoss(ignore_index=data.train.pad_index)
+    optimizer = config.optimizer(model)
+    criterion = config.criterion(data)
 
     # If training is enabled in config.yaml, we will actually train the model
     # Otherwise we'll just load the previously saved model from config['model_dir']
-    if config["training"]["enabled"]:
+    if config.training_enabled():
         best_valid_loss = float("inf")
-        for epoch in tqdm.tqdm(range(config['training']['epochs'])):
+        for _ in tqdm.tqdm(range(config['training']['epochs'])):
             train_loss = train_fn(
                 model,
                 data.train.loader,
@@ -201,37 +95,17 @@ def main():
             )
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
-                torch.save(model.state_dict(), model_file)
+                model.save()
             print(f"\n\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
             print(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
 
-    try:
-        model.load_state_dict(torch.load(model_file))
-    except Exception as e:
-        model.load_state_dict(torch.load(model_file, map_location = torch.device('cpu')))
+    model.load_from_file(config.model_file)
 
     assert model is not None
 
-    if config['training']['enabled']:
+    if config.training_enabled():
         test_loss = evaluate_fn(model, data.test.loader, criterion, device)
         print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
-
-    # CHECK WORDS WE HAVE TRAINED
-    print("Checking first 10 trained examples")
-    print("=" * 80)
-    for word, morph in zip(data.test.words[:1], data.test.morphs[:1]):
-        pred = segment_word(word, model, data.test.word_vocab, data.test.morph_vocab, device)
-        print(f'word: {"".join(word[1:-1])}\n\t  pred: {pred}\n\tactual: {"".join(morph[1:-1])}')
-
-    exit(0)
-    # WORDS WE HAVEN'T TRAINED
-    print("Checking first 10 gold standard examples")
-    print("=" * 80)
-    f1 = find_f1(data.test.words[:1000], data.test.morphs[:1000], model, data.test.word_vocab, data.test.morph_vocab, device)
-    print(f'f1: {f1}')
-    # for word, morph in zip(data.test.words[:10], data.test.morphs[:10]):
-    #     actual, predict, predict_str = segment_word(word, morph, model, data.train.word_vocab, data.train.morph_vocab, '<SOS>', '<EOS>', device)
-    #     print(f'word: {"".join(word[1:-1])}\n\t  pred: {pred}\n\tactual: {"".join(morph[1:-1])}')
 
 if __name__ == '__main__':
     main()

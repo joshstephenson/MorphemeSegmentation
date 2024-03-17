@@ -1,14 +1,19 @@
 import torch
 import torch.nn as nn
 import random
+import os
+from config import Config
+
+config = Config()
 
 class Encoder(nn.Module):
-    def __init__(self, input_dim, **kwargs):
+    def __init__(self, input_dim):
         super().__init__()
+        kwargs = config['encoder_decoder']
         self.hidden_dim = kwargs['hidden_dim']
         self.n_layers = kwargs['n_layers']
         self.embedding = nn.Embedding(input_dim, kwargs['embedding_dim'])
-        self.rnn = nn.LSTM(kwargs['embedding_dim'], kwargs['hidden_dim'], kwargs['n_layers'], dropout = kwargs['dropout'])
+        self.rnn = nn.LSTM(kwargs['embedding_dim'], kwargs['hidden_dim'], kwargs['n_layers'], dropout=kwargs['dropout'])
         self.dropout = nn.Dropout(kwargs['dropout'])
 
     def forward(self, src):
@@ -23,8 +28,9 @@ class Encoder(nn.Module):
         return hidden, cell
 
 class Decoder(nn.Module):
-    def __init__(self, output_dim, **kwargs):
+    def __init__(self, output_dim):
         super().__init__()
+        kwargs = config['encoder_decoder']
         self.output_dim = output_dim
         self.hidden_dim = kwargs['hidden_dim']
         self.n_layers = kwargs['n_layers']
@@ -56,19 +62,31 @@ class Decoder(nn.Module):
         # prediction = [batch size, output dim]
         return prediction, hidden, cell
 
+def init_weights(m):
+    initial = config['preprocessing']['initial_weights']
+    for name, param in m.named_parameters():
+        nn.init.uniform_(param.data, -initial, initial)
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 class Seq2Seq(nn.Module):
-    def __init__(self, encoder, decoder, device):
+    def __init__(self, data, device, config):
         super().__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+        self.encoder = Encoder(data.word_len)
+        self.decoder = Decoder(data.morph_len)
         self.device = device
         assert (
-                encoder.hidden_dim == decoder.hidden_dim
+                self.encoder.hidden_dim == self.decoder.hidden_dim
         ), "Hidden dimensions of encoder and decoder must be equal!"
         assert (
-                encoder.n_layers == decoder.n_layers
+                self.encoder.n_layers == self.decoder.n_layers
         ), "Encoder and decoder must have equal number of layers!"
+
+        if config.training_enabled():
+            self.apply(init_weights)
+
+        print(f"The model has {count_parameters(self):,} trainable parameters")
 
     def forward(self, src, trg, teacher_forcing_ratio):
         # src = [src length, batch size]
@@ -105,3 +123,16 @@ class Seq2Seq(nn.Module):
             input = trg[t] if teacher_force else top1
             # input = [batch size]
         return outputs
+
+    def save(self):
+        torch.save(self.state_dict(), config.model_file)
+
+    def load_from_file(self, file):
+        if not os.path.exists(file):
+            print("No model file found. Perhaps you forgot to train first?")
+            exit(1)
+        try:
+            self.load_state_dict(torch.load(file))
+        except Exception as _:
+            # we load this on the cpu when the model was generated on the hosted env
+            self.load_state_dict(torch.load(file, map_location=torch.device('cpu')))

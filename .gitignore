@@ -191,6 +191,7 @@ bin/wheel
 pyvenv.cfg
 share/man/man1/isympy.1
 src/cuts.py
+src/model/
 src/data/ces.sentence.dev.tsv
 src/data/ces.sentence.test.gold.tsv
 src/data/ces.sentence.test.tsv
@@ -240,8 +241,6 @@ src/data/spa.word.train.tsv
 src/data/surprise/mon.word.dev.tsv
 src/data/surprise/mon.word.train.tsv
 src/embedding_test.py
-src/model/hun-512-by_char.pt
-src/model/hun-by_char.pt
 src/seq2seq.py
 src/translation_data/test.jsonl
 src/translation_data/train.jsonl

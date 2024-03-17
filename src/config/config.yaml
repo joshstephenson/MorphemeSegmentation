@@ -1,25 +1,19 @@
 language: hun
 model_dir: model
 data_dir: data
-model_suffix: 512-by_char.pt
+model_suffix: -by_char.pt
 
 preprocessing:
-  min_freq: 1
-  batch_size: 256
+  min_freq: 2
+  batch_size: 128
   shuffle: False
   initial_weights: 0.8
 
-encoder:
-  embedding_dim: 512
+encoder_decoder:
+  embedding_dim: 256
   hidden_dim: 512
   n_layers: 2
-  dropout: 0.3
-
-decoder:
-  embedding_dim: 512
-  hidden_dim: 512
-  n_layers: 2
-  dropout: 0.3
+  dropout: 0.5
 
 training:
   enabled: True
