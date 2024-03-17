@@ -5,7 +5,7 @@ import logging
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from src.morpheme_data import MorphemeDataLoader
+from morpheme_data import MorphemeDataLoader
 
 
 class Config():
