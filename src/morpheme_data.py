@@ -8,7 +8,7 @@ import torchtext
 from datasets import Dataset
 import logging
 
-MORPH_SEPARATOR = '|'
+MORPH_SEPARATOR = ' |'
 
 class MorphemeDataLoader:
     def __init__(self, config):
