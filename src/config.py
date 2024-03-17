@@ -1,4 +1,5 @@
 import yaml
+import os
 import os.path as pt
 import logging
 import torch
@@ -38,6 +39,8 @@ class Config():
         except Exception as _:
             file = config['model_dir'] + '/' + model_file
         self.model_file = file
+        if not os.path.exists(config['model_dir']):
+            os.makedirs(config['model_dir'])
         assert self.model_file is not None
 
     def device(self):
