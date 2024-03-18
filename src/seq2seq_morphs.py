@@ -299,6 +299,7 @@ decoder = Decoder(
 )
 
 model = Seq2Seq(encoder, decoder, device).to(device)
+print(model)
 
 def init_weights(m):
     for name, param in m.named_parameters():
