@@ -92,7 +92,7 @@ def main():
 
             model.load_from_file(config.model_file)
 
-            test_loss = evaluate_fn(model, data.test.loader, criterion, device)
+            test_loss = evaluate_fn(model, data.test.loader, criterion, scheduler, device)
             print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
 if __name__ == '__main__':
