@@ -42,7 +42,7 @@ def train_fn(model, data_loader, optimizer, criterion, device, **kwargs):
             print(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
     return epoch_loss / len(data_loader)
 
-def evaluate_fn(model, data_loader, criterion, device):
+def evaluate_fn(model, data_loader, criterion, scheduler, device):
     model.eval()
     epoch_loss = 0
     with torch.no_grad():
@@ -59,6 +59,7 @@ def evaluate_fn(model, data_loader, criterion, device):
             morphs = morphs[1:].view(-1)
             # morphs = [(morphs length - 1) * batch size]
             loss = criterion(output, morphs)
+            scheduler.step(loss)
             epoch_loss += loss.item()
     return epoch_loss / len(data_loader)
 
@@ -70,7 +71,7 @@ def main():
     model = Seq2Seq(data.train, device, config).to(device)
     print(model)
 
-    optimizer = config.optimizer(model)
+    optimizer, scheduler = config.optimizer(model)
     criterion = config.criterion(data)
 
     # If training is enabled in config.yaml, we will actually train the model
