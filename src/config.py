@@ -38,6 +38,7 @@ class Config():
 
     def optimizer(self, model, include_scheduler = True):
         optimizer = optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
+        # optimizer = optim.Adam(model.parameters())
         scheduler = None
         if include_scheduler:
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
@@ -48,8 +49,8 @@ class Config():
                                                    threshold_mode='abs')
         return optimizer, scheduler
 
-    def criterion(self, data:MorphemeDataLoader):
-        return nn.CrossEntropyLoss(ignore_index=data.train.pad_index)
+    def criterion(self, pad_index):
+        return nn.CrossEntropyLoss(ignore_index=pad_index)
 
     def __getitem__(self, item):
         return self.config[item]

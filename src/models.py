@@ -6,15 +6,23 @@ from config import Config
 
 config = Config()
 
+
+def init_weights(m):
+    initial = config['preprocessing']['initial_weights']
+    for name, param in m.named_parameters():
+        nn.init.uniform_(param.data, -initial, initial)
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 class Encoder(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
-        kwargs = config['encoder_decoder']
-        self.hidden_dim = kwargs['hidden_dim']
-        self.n_layers = kwargs['n_layers']
-        self.embedding = nn.Embedding(input_dim, kwargs['embedding_dim'])
-        self.rnn = nn.LSTM(kwargs['embedding_dim'], kwargs['hidden_dim'], kwargs['n_layers'], dropout=kwargs['dropout'])
-        self.dropout = nn.Dropout(kwargs['dropout'])
+        self.hidden_dim = config['encoder_decoder']['hidden_dim']
+        self.n_layers = config['encoder_decoder']['n_layers']
+        self.embedding = nn.Embedding(input_dim, config['encoder_decoder']['embedding_dim'])
+        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'], config['encoder_decoder']['n_layers'], dropout=config['encoder_decoder']['dropout'])
+        self.dropout = nn.Dropout(config['encoder_decoder']['dropout'])
 
     def forward(self, src):
         # src = [src length, batch size]
@@ -30,14 +38,13 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, output_dim):
         super().__init__()
-        kwargs = config['encoder_decoder']
         self.output_dim = output_dim
-        self.hidden_dim = kwargs['hidden_dim']
-        self.n_layers = kwargs['n_layers']
-        self.embedding = nn.Embedding(output_dim, kwargs['embedding_dim'])
-        self.rnn = nn.LSTM(kwargs['embedding_dim'], kwargs['hidden_dim'], kwargs['n_layers'], dropout = kwargs['dropout'])
-        self.fc_out = nn.Linear(kwargs['hidden_dim'], output_dim)
-        self.dropout = nn.Dropout(kwargs['dropout'])
+        self.hidden_dim = config['encoder_decoder']['hidden_dim']
+        self.n_layers = config['encoder_decoder']['n_layers']
+        self.embedding = nn.Embedding(output_dim, config['encoder_decoder']['embedding_dim'])
+        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'], config['encoder_decoder']['n_layers'], dropout=config['encoder_decoder']['dropout'])
+        self.fc_out = nn.Linear(config['encoder_decoder']['hidden_dim'], output_dim)
+        self.dropout = nn.Dropout(config['encoder_decoder']['dropout'])
 
     def forward(self, input, hidden, cell):
         # input = [batch size]
@@ -62,19 +69,11 @@ class Decoder(nn.Module):
         # prediction = [batch size, output dim]
         return prediction, hidden, cell
 
-def init_weights(m):
-    initial = config['preprocessing']['initial_weights']
-    for name, param in m.named_parameters():
-        nn.init.uniform_(param.data, -initial, initial)
-
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
 class Seq2Seq(nn.Module):
-    def __init__(self, data, device, config):
+    def __init__(self, input_dim, output_dim, device):
         super().__init__()
-        self.encoder = Encoder(data.word_len)
-        self.decoder = Decoder(data.morph_len)
+        self.encoder = Encoder(input_dim)
+        self.decoder = Decoder(output_dim)
         self.device = device
         assert (
                 self.encoder.hidden_dim == self.decoder.hidden_dim
@@ -82,11 +81,6 @@ class Seq2Seq(nn.Module):
         assert (
                 self.encoder.n_layers == self.decoder.n_layers
         ), "Encoder and decoder must have equal number of layers!"
-
-        if config.training_enabled():
-            self.apply(init_weights)
-
-        print(f"The model has {count_parameters(self):,} trainable parameters")
 
     def forward(self, src, trg, teacher_forcing_ratio):
         # src = [src length, batch size]

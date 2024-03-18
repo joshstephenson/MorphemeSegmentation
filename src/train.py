@@ -55,24 +55,14 @@ def evaluate_fn(model, data_loader, criterion, scheduler, device):
 
 def main():
     config = Config()
-
-    LANGUAGE = config['language']
-    UNKNOWN_TOKEN = config['special_tokens']['unknown_token']
-    PAD_TOKEN = config['special_tokens']['pad_token']
-    SOS_TOKEN = config['special_tokens']['sos_token']
-    EOS_TOKEN = config['special_tokens']['eos_token']
-
-    model_file = config.model_file
-
     data = MorphemeDataLoader(config)
-    # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
-    device = config.device()
-
-    model = Seq2Seq(data.train, device, config).to(device)
+    device = config.device() # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+    model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
     print(model)
 
+    # optimizer, scheduler = config.optimizer(model)
     optimizer, scheduler = config.optimizer(model)
-    criterion = config.criterion(data)
+    criterion = config.criterion(data.train.pad_index)
 
     # If training is enabled in config.yaml, we will actually train the model
     # Otherwise we'll just load the previously saved model from config['model_dir']
@@ -91,6 +81,7 @@ def main():
                 model,
                 data.validation.loader,
                 criterion,
+                scheduler,
                 device,
             )
             if valid_loss < best_valid_loss:
@@ -99,13 +90,10 @@ def main():
             print(f"\n\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
             print(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
 
-    model.load_from_file(config.model_file)
+            model.load_from_file(config.model_file)
 
-    assert model is not None
-
-    if config.training_enabled():
-        test_loss = evaluate_fn(model, data.test.loader, criterion, device)
-        print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
+            test_loss = evaluate_fn(model, data.test.loader, criterion, device)
+            print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
 if __name__ == '__main__':
     main()

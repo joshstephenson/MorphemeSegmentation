@@ -247,3 +247,4 @@ src/translation_data/val.jsonl
 src/pos_test.py
 src/train.ipynb
 .idea/
+src/tut1-model.pt
