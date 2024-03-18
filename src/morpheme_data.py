@@ -30,7 +30,7 @@ class MorphemeDataLoader:
                 # table = table[:1000]
 
                 # Replace ' @@' morpheme marker with '@' which will make things easier
-                table['morph_str'] = table['morph_str'].str.replace(' @@', MORPH_SEPARATOR)
+                # table['morph_str'] = table['morph_str'].str.replace(' @@', MORPH_SEPARATOR)
                 words = [[SOS_TOKEN] + list(w) + [EOS_TOKEN] for w in table['words'].to_numpy()]
                 morphs = [[SOS_TOKEN] + list(m) + [EOS_TOKEN] for m in table['morph_str'].to_numpy()]
                 # word_classes = table['identifier'].to_numpy()
