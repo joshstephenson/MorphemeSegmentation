@@ -242,6 +242,7 @@ src/data/surprise/mon.word.dev.tsv
 src/data/surprise/mon.word.train.tsv
 src/embedding_test.py
 src/seq2seq.py
+src/seq2seq*
 src/translation_data/test.jsonl
 src/translation_data/train.jsonl
 src/translation_data/val.jsonl
