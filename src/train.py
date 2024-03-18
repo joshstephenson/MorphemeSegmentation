@@ -6,16 +6,6 @@ import torch
 import tqdm
 from config import Config
 
-config = Config()
-
-LANGUAGE = config['language']
-UNKNOWN_TOKEN = config['special_tokens']['unknown_token']
-PAD_TOKEN = config['special_tokens']['pad_token']
-SOS_TOKEN = config['special_tokens']['sos_token']
-EOS_TOKEN = config['special_tokens']['eos_token']
-
-model_file = config.model_file
-
 def train_fn(model, data_loader, optimizer, criterion, device, **kwargs):
     model.train()
     epoch_loss = 0
@@ -64,6 +54,16 @@ def evaluate_fn(model, data_loader, criterion, scheduler, device):
     return epoch_loss / len(data_loader)
 
 def main():
+    config = Config()
+
+    LANGUAGE = config['language']
+    UNKNOWN_TOKEN = config['special_tokens']['unknown_token']
+    PAD_TOKEN = config['special_tokens']['pad_token']
+    SOS_TOKEN = config['special_tokens']['sos_token']
+    EOS_TOKEN = config['special_tokens']['eos_token']
+
+    model_file = config.model_file
+
     data = MorphemeDataLoader(config)
     # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
     device = config.device()
