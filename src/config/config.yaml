@@ -1,7 +1,9 @@
 language: hun
 model_dir: model
 data_dir: ../2022SegmentationST/data
-model_suffix: -by_char.pt
+model_suffix: -by_char
+model_ext: pt
+predictions_ext: tsv
 
 preprocessing:
   min_freq: 2
