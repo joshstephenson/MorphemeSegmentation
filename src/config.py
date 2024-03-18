@@ -1,7 +1,6 @@
 import yaml
-import os
+from helpers import project_file
 import os.path as pt
-import logging
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -24,23 +23,8 @@ class Config():
 
         self.config = config
 
-        # Logger
-        LOG_FORMAT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-        logging.basicConfig(format=LOG_FORMAT, level=getattr(logging, 'INFO'))
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.INFO)
-        self.logger = logger
-
         # Where we store the generated model
-        lang = self['language']
-        model_file = lang + '-' + str(self['encoder_decoder']['hidden_dim']) + self['model_suffix']
-        try:
-            file = pt.join(pt.dirname(pt.abspath(__file__)), config['model_dir'], model_file)
-        except Exception as _:
-            file = config['model_dir'] + '/' + model_file
-        self.model_file = file
-        if not os.path.exists(config['model_dir']):
-            os.makedirs(config['model_dir'])
+        self.model_file = project_file(self, self.config['model_ext'], self.config['model_suffix'])
         assert self.model_file is not None
 
     def device(self):
@@ -52,8 +36,17 @@ class Config():
             exit(1)
         return device
 
-    def optimizer(self, model):
-        return optim.Adam(model.parameters())
+    def optimizer(self, model, include_scheduler = True):
+        optimizer = optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
+        scheduler = None
+        if include_scheduler:
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                   mode='min',
+                                                   factor=0.1,
+                                                   patience=10,
+                                                   threshold=0.0001,
+                                                   threshold_mode='abs')
+        return optimizer, scheduler
 
     def criterion(self, data:MorphemeDataLoader):
         return nn.CrossEntropyLoss(ignore_index=data.train.pad_index)
