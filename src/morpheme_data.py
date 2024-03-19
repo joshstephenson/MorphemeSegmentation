@@ -7,8 +7,8 @@ import os.path as pt
 import torchtext
 from datasets import Dataset
 import logging
+from helpers import preprocess
 
-MORPH_SEPARATOR = ' |'
 
 class MorphemeDataLoader:
     def __init__(self, config):
@@ -30,7 +30,7 @@ class MorphemeDataLoader:
                 # table = table[:1000]
 
                 # Replace ' @@' morpheme marker with '@' which will make things easier
-                # table['morph_str'] = table['morph_str'].str.replace(' @@', MORPH_SEPARATOR)
+                table['morph_str'] = preprocess(table['morph_str'].str)
                 words = [[SOS_TOKEN] + list(w) + [EOS_TOKEN] for w in table['words'].to_numpy()]
                 morphs = [[SOS_TOKEN] + list(m) + [EOS_TOKEN] for m in table['morph_str'].to_numpy()]
                 # word_classes = table['identifier'].to_numpy()
@@ -104,3 +104,6 @@ class MorphemeDataLoader:
                 return data_loader
 
             self.loader = get_data_loader(ids, self.pad_index, **config['preprocessing'])
+
+        def __getitem__(self, item):
+            return zip(self.words[item], self.morphs[item])

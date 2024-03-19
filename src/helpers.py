@@ -1,6 +1,15 @@
 import os
 import logging
 
+MORPH_SEPARATOR_INTERNAL = '|'
+MORPH_SEPARATOR_EXTERNAL = ' @@'
+
+def preprocess(morphs):
+    return morphs.replace(MORPH_SEPARATOR_EXTERNAL, MORPH_SEPARATOR_INTERNAL)
+
+def postprocess(prediction):
+    return prediction.strip().replace(MORPH_SEPARATOR_INTERNAL, MORPH_SEPARATOR_EXTERNAL)
+
 def project_file(config, extension, suffix = None):
     lang = config['language']
     suffix = suffix if suffix is not None else ''
