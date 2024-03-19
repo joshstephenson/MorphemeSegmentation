@@ -7,28 +7,34 @@ config = Config()
 SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
-def segment_word(word, model, data, device, max_output_length=config['predictions']['max_output']):
+
+def segment_word(
+        word,
+        model,
+        dataset,
+        device,
+        max_output_length=config['predictions']['max_output'],
+):
+    word_vocab = dataset.word_vocab
+    morph_vocab = dataset.morph_vocab
     model.eval()
-    word_vocab = data.word_vocab
-    morph_vocab = data.morph_vocab
     with torch.no_grad():
-        word_ids = word_vocab.lookup_indices(word)
-        word_tensor = torch.LongTensor(word_ids).unsqueeze(-1).to(device)
-        hidden, cell = model.encoder(word_tensor)
-        input_ids = morph_vocab.lookup_indices([SOS_TOKEN])
+        tokens = word
+        ids = word_vocab.lookup_indices(tokens)
+        tensor = torch.LongTensor(ids).unsqueeze(-1).to(device)
+        hidden, cell = model.encoder(tensor)
+        inputs = morph_vocab.lookup_indices([SOS_TOKEN])
         last_index = None
         for _ in range(max_output_length):
-            # print("".join(morph_vocab.lookup_tokens(input_ids)))
-            inputs_tensor = torch.LongTensor([input_ids[-1]]).to(device)
+            inputs_tensor = torch.LongTensor([inputs[-1]]).to(device)
             output, hidden, cell = model.decoder(inputs_tensor, hidden, cell)
             predicted_token = output.argmax(-1).item()
-            # print(predicted_token)
-            input_ids.append(predicted_token)
+            inputs.append(predicted_token)
             if predicted_token == morph_vocab[EOS_TOKEN]:
                 last_index = -1
                 break
-        tokens = morph_vocab.lookup_tokens(input_ids)
-    prediction = ("".join(tokens[1:last_index]))
+        tokens = morph_vocab.lookup_tokens(inputs)
+        prediction = "".join(tokens[1:last_index])
     return prediction
 
 def segment_word2(word, model, data, device, max_output_length=config['predictions']['max_output']):
@@ -65,21 +71,19 @@ def segment_word2(word, model, data, device, max_output_length=config['predictio
     return prediction
 
 def main():
+    config = Config()
     data = MorphemeDataLoader(config)
-
-    # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
-    device = config.device()
-
-    model = Seq2Seq(data.train, device, config).to(device)
+    device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+    model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
     model.load_from_file(config.model_file)
     print(model)
 
     # CHECK WORDS WE HAVE TRAINED
-    print("Checking first 10 trained examples")
+    print("Checking first x trained examples")
     print("=" * 80)
-    count = 20
+    count = 2
     for word, morph in zip(data.train.words[:count], data.train.morphs[:count]):
-        pred = segment_word(word, model, data.train, device)
+        pred = segment_word(word, model, data.train.word_vocab, data.train.morph_vocab, SOS_TOKEN, EOS_TOKEN, device)
         print(f'word: {"".join(word[1:-1])}\n\t  pred: {pred}\n\tactual: {"".join(morph[1:-1])}')
 
     # print(", ".join(data.train.word_vocab.get_itos()))
