@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 import numpy as np
-import spacy
-from datasets import Dataset
 import torchtext
 import tqdm
 import evaluate
@@ -371,33 +369,33 @@ teacher_forcing_ratio = 0.5
 
 best_valid_loss = float("inf")
 
-for epoch in tqdm.tqdm(range(n_epochs)):
-    train_loss = train_fn(
-        model,
-        data.train.loader,
-        optimizer,
-        criterion,
-        clip,
-        teacher_forcing_ratio,
-        device,
-    )
-    valid_loss = evaluate_fn(
-        model,
-        data.validation.loader,
-        criterion,
-        device,
-    )
-    if valid_loss < best_valid_loss:
-        best_valid_loss = valid_loss
-        torch.save(model.state_dict(), "tut1-model.pt")
-    print(f"\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
-    print(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
-
-    model.load_state_dict(torch.load("tut1-model.pt"))
-
-    test_loss = evaluate_fn(model, data.test.loader, criterion, device)
-
-    print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
+# for epoch in tqdm.tqdm(range(n_epochs)):
+#     train_loss = train_fn(
+#         model,
+#         data.train.loader,
+#         optimizer,
+#         criterion,
+#         clip,
+#         teacher_forcing_ratio,
+#         device,
+#     )
+#     valid_loss = evaluate_fn(
+#         model,
+#         data.validation.loader,
+#         criterion,
+#         device,
+#     )
+#     if valid_loss < best_valid_loss:
+#         best_valid_loss = valid_loss
+#         torch.save(model.state_dict(), "tut1-model.pt")
+#     print(f"\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
+#     print(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
+#
+#     model.load_state_dict(torch.load("tut1-model.pt"))
+#
+#     test_loss = evaluate_fn(model, data.test.loader, criterion, device)
+#
+#     print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
 
 def segment_word(
@@ -417,22 +415,25 @@ def segment_word(
         tensor = torch.LongTensor(ids).unsqueeze(-1).to(device)
         hidden, cell = model.encoder(tensor)
         inputs = word_vocab.lookup_indices([sos_token])
+        last_index = None
         for _ in range(max_output_length):
             inputs_tensor = torch.LongTensor([inputs[-1]]).to(device)
             output, hidden, cell = model.decoder(inputs_tensor, hidden, cell)
             predicted_token = output.argmax(-1).item()
             inputs.append(predicted_token)
             if predicted_token == word_vocab[eos_token]:
+                last_index = -1
                 break
         tokens = word_vocab.lookup_tokens(inputs)
-    return tokens
+    return "".join(tokens[1:last_index])
 
+model.load_state_dict(torch.load("model/hun-512-by_char.pt", map_location=device))
 print("Checking first 10 trained examples")
 print("=" * 80)
-count = 20
+count = 2
 for word, morph in zip(data.train.words[:count], data.train.morphs[:count]):
     pred = segment_word(word, model, data.train.word_vocab, data.train.morph_vocab, '<SOS>', '<EOS>', device)
-    print(f'word: {"".join(word[1:-1])}\n\t  pred: {pred}\n\tactual: {"".join(morph[1:-1])}')
+    print(f'word: {"".join(word)}\n\t  pred: {pred}\n\tactual: {"".join(morph)}')
 
 # expected_translation = test_data[0]["en"]
 # sentence = test_data[0]["de"]
