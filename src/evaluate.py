@@ -1,7 +1,5 @@
-import torch
-from config import Config
 from predict import segment_word
-from helpers import project_file
+from helpers import postprocess
 from morpheme_data import MorphemeDataLoader
 from models import *
 from helpers import *
@@ -13,28 +11,25 @@ SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
 def main():
+    config = Config()
     data = MorphemeDataLoader(config)
-
-    # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
-    device = config.device()
-
-    model = Seq2Seq(data.test, device, config).to(device)
+    device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+    model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
     model.load_from_file(config.model_file)
     print(model)
 
-    lang = config['language']
-    pred_file = project_file(config, config['predictions_ext'] + '-train', config['model_suffix'])
+    pred_file = project_file(config, config['predictions_ext'], config['model_suffix'] + '-test')
     assert pred_file is not None
 
+    dataset = data.test
     with open(pred_file, 'w') as f:
-        for word in data.test.words:
-            pred = segment_word(word, model, data.test, device)
-            f.write("".join(word[1:-1]) + '\t' + pred + '\n')
-    print("Predictions written to: {pred_file")
-
-
-
-
+        for word, morphs in dataset[:]:
+            pred = segment_word(word, model, dataset, device)
+            pred = postprocess(pred)
+            line = "".join(word[1:-1]) + '\t' + pred
+            logger.info(line + " (" + "".join(morphs[1:-1]) + ")")
+            f.write(line + "\n")
+    logger.info(f"Predictions written to: {pred_file}")
 
 if __name__ == "__main__":
     main()
