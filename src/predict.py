@@ -2,19 +2,15 @@ import torch
 from config import Config
 from morpheme_data import MorphemeDataLoader
 from models import Seq2Seq
+from helpers import get_logger, postprocess
 
 config = Config()
+logger = get_logger()
 SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
 
-def segment_word(
-        word,
-        model,
-        dataset,
-        device,
-        max_output_length=config['predictions']['max_output'],
-):
+def segment_word(word, model, dataset, device, max_output_length=config['predictions']['max_output']):
     word_vocab = dataset.word_vocab
     morph_vocab = dataset.morph_vocab
     model.eval()
@@ -37,13 +33,12 @@ def segment_word(
         prediction = "".join(tokens[1:last_index])
     return prediction
 
-def segment_word2(word, model, data, device, max_output_length=config['predictions']['max_output']):
+def segment_word2(word, model, dataset, device):
+    word_vocab = dataset.word_vocab
+    morph_vocab = dataset.morph_vocab
     model.eval()
-    word_vocab = data.word_vocab
-    morph_vocab = data.morph_vocab
     with torch.no_grad():
         word_index = 1 # we are preloading with first 2 tokens (SOS + first_char)
-        print(word)
         word_ids = word_vocab.lookup_indices(word)
         word_tensor = torch.LongTensor(word_ids).unsqueeze(-1).to(device)
         hidden, cell = model.encoder(word_tensor)
@@ -60,7 +55,7 @@ def segment_word2(word, model, data, device, max_output_length=config['predictio
                 pred_char = morph_vocab.lookup_tokens([predicted_token_id])[0]
                 char = word[word_index]
                 if pred_char != char:
-                    print(f'Model predicted {pred_char}, using {char} instead.')
+                    logger.info(f'Model predicted {pred_char}, using {char} instead.')
                     predicted_token_id = morph_vocab.lookup_indices([char])[0]
                 # else:
                     # print('prediction matched')
@@ -73,32 +68,20 @@ def segment_word2(word, model, data, device, max_output_length=config['predictio
 def main():
     config = Config()
     data = MorphemeDataLoader(config)
-    device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+    device = config.device()
     model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
     model.load_from_file(config.model_file)
-    print(model)
+    logger.info(model)
 
     # CHECK WORDS WE HAVE TRAINED
-    print("Checking first x trained examples")
-    print("=" * 80)
-    count = 2
-    for word, morph in zip(data.train.words[:count], data.train.morphs[:count]):
-        pred = segment_word(word, model, data.train.word_vocab, data.train.morph_vocab, SOS_TOKEN, EOS_TOKEN, device)
-        print(f'word: {"".join(word[1:-1])}\n\t  pred: {pred}\n\tactual: {"".join(morph[1:-1])}')
-
-    # print(", ".join(data.train.word_vocab.get_itos()))
-    # print(", ".join(data.train.morph_vocab.get_itos()))
-
-    exit(0)
-    # WORDS WE HAVEN'T TRAINED
-    print("Checking first 10 gold standard examples")
-    print("=" * 80)
-    f1 = find_f1(data.test.words[:1000], data.test.morphs[:1000], model, data.test.word_vocab, data.test.morph_vocab,
-                 device)
-    print(f'f1: {f1}')
-    # for word, morph in zip(data.test.words[:10], data.test.morphs[:10]):
-    #     actual, predict, predict_str = segment_word(word, morph, model, data.train.word_vocab, data.train.morph_vocab, '<SOS>', '<EOS>', device)
-    #     print(f'word: {"".join(word[1:-1])}\n\t  pred: {pred}\n\tactual: {"".join(morph[1:-1])}')
+    logger.info("Checking first x trained examples")
+    logger.info("=" * 80)
+    dataset = data.test
+    for word, morphs in dataset[:10]:
+        pred = segment_word2(word, model, dataset, device)
+        pred = postprocess(pred)
+        line = "".join(word[1:-1]) + '\t' + pred
+        logger.info(line + " (" + "".join(morphs[1:-1]) + ")")
 
 if __name__ == "__main__":
     main()

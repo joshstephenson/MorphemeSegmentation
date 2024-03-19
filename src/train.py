@@ -10,7 +10,7 @@ def train_fn(model, data_loader, optimizer, criterion, device, **kwargs):
     model.train()
     epoch_loss = 0
     for i, batch in enumerate(data_loader):
-        # print(f"BATCH: {batch}")
+        # logger.info(f"BATCH: {batch}")
         word = batch["word_ids"].to(device)
         morphs = batch["morph_ids"].to(device)
         # word = [word length, batch size]
@@ -29,7 +29,7 @@ def train_fn(model, data_loader, optimizer, criterion, device, **kwargs):
         optimizer.step()
         epoch_loss += loss.item()
         if i % 100 == 0:
-            print(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
+            logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
     return epoch_loss / len(data_loader)
 
 def evaluate_fn(model, data_loader, criterion, scheduler, device):
@@ -58,7 +58,7 @@ def main():
     data = MorphemeDataLoader(config)
     device = config.device() # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
     model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
-    print(model)
+    logger.info(model)
 
     # optimizer, scheduler = config.optimizer(model)
     optimizer, scheduler = config.optimizer(model)
@@ -87,15 +87,15 @@ def main():
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
                 model.save()
-            print(f"\n\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
-            print(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
+            logger.info(f"\n\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
+            logger.info(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
 
             model.load_from_file(config.model_file)
 
             test_loss = evaluate_fn(model, data.test.loader, criterion, scheduler, device)
-            print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
+            logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
     else:
-        print("Training disabled in config.yaml")
+        logger.info("Training disabled in config.yaml")
 
 if __name__ == '__main__':
     main()

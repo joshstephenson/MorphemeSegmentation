@@ -13,7 +13,17 @@ def postprocess(prediction):
 def project_file(config, extension, suffix = None):
     lang = config['language']
     suffix = suffix if suffix is not None else ''
-    filename = lang + '-' + str(config['encoder_decoder']['hidden_dim']) + suffix + '.' + extension
+    filename = (lang +
+                '-embeddings_' + str(config['encoder_decoder']['embedding_dim']) +
+                '-hidden_' + str(config['encoder_decoder']['hidden_dim']) +
+                '-n_layers_' + str(config['encoder_decoder']['n_layers']) +
+                '-dropout_' + str(config['encoder_decoder']['dropout']) +
+                '-tfr_' + str(config['training']['teacher_forcing_ratio']) +
+                '-lr_' + str(config['training']['learning_rate']) +
+                '-clip_' + str(config['training']['clip']) +
+                suffix +
+                '.' +
+                extension)
     directory = config['model_dir']
     if not os.path.isdir(directory):
         os.makedirs(directory)

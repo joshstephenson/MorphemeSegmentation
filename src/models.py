@@ -3,9 +3,10 @@ import torch.nn as nn
 import random
 import os
 from config import Config
+from helpers import get_logger
 
 config = Config()
-
+logger = get_logger()
 
 def init_weights(m):
     initial = config['preprocessing']['initial_weights']
@@ -123,7 +124,7 @@ class Seq2Seq(nn.Module):
 
     def load_from_file(self, file):
         if not os.path.exists(file):
-            print("No model file found. Perhaps you forgot to train first?")
+            logger.exception("No model file found. Perhaps you forgot to train first?")
             exit(1)
         try:
             self.load_state_dict(torch.load(file))

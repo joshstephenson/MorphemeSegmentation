@@ -1,4 +1,6 @@
-from predict import segment_word
+import logging
+
+from predict import segment_word2
 from helpers import postprocess
 from morpheme_data import MorphemeDataLoader
 from models import *
@@ -6,6 +8,7 @@ from helpers import *
 
 config = Config()
 logger = get_logger()
+logger.setLevel(logging.WARN)
 
 SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
@@ -16,15 +19,16 @@ def main():
     device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
     model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
     model.load_from_file(config.model_file)
-    print(model)
+    logger.info(model)
 
-    pred_file = project_file(config, config['predictions_ext'], config['model_suffix'] + '-test')
+    pred_file = project_file(config, config['predictions_ext'], config['model_suffix'] + '-test-improved')
     assert pred_file is not None
 
     dataset = data.test
+    logger.setLevel(logging.WARN)
     with open(pred_file, 'w') as f:
         for word, morphs in dataset[:]:
-            pred = segment_word(word, model, dataset, device)
+            pred = segment_word2(word, model, dataset, device)
             pred = postprocess(pred)
             line = "".join(word[1:-1]) + '\t' + pred
             logger.info(line + " (" + "".join(morphs[1:-1]) + ")")

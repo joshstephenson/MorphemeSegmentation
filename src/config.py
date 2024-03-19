@@ -1,11 +1,11 @@
 import yaml
-from helpers import project_file
+from helpers import project_file, get_logger
 import os.path as pt
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from morpheme_data import MorphemeDataLoader
 
+logger = get_logger()
 
 class Config():
     def __init__(self):
@@ -28,11 +28,15 @@ class Config():
         assert self.model_file is not None
 
     def device(self):
+        """
+        Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+        :return: device
+        """
         device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cuda")
         if torch.backends.mps.is_available() or torch.cuda.is_available():
-            print("GPU ENABLED √")
+            logger.info("GPU ENABLED √")
         else:
-            print("NO GPU ACCESS. EXITING.")
+            logger.exception("NO GPU ACCESS. EXITING.")
             exit(1)
         return device
 
