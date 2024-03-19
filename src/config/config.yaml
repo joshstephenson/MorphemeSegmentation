@@ -18,7 +18,7 @@ encoder_decoder:
   dropout: 0.5
 
 training:
-  enabled: True
+  enabled: False
   learning_rate: 0.001
   epochs: 10
   teacher_forcing_ratio: 0.5
