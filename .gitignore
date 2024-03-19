@@ -248,3 +248,4 @@ src/pos_test.py
 src/train.ipynb
 .idea/
 src/tut1-model.pt
+src/.DS_Store
