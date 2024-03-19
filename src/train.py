@@ -94,6 +94,8 @@ def main():
 
             test_loss = evaluate_fn(model, data.test.loader, criterion, scheduler, device)
             print(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
+    else:
+        print("Training disabled in config.yaml")
 
 if __name__ == '__main__':
     main()
