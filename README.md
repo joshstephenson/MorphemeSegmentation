@@ -3,7 +3,7 @@ This project is an attempt at reproduction of [DeepSPIN-2](https://aclanthology.
 
 This was the 2nd place winner in the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/).
 
-To be clear: this is not DeepSPIN-2, but an initial (for now) attempt at reproducing the results based on a description of the model found in the above paper.
+To be clear: this is not DeepSPIN-2, but an attempt at recreating it based on the information shared in the paper.
 
 ##### A note about cloning
 Make sure to clone this with `--recuse-submodules` to ensure you get the data from the competition.
@@ -40,10 +40,10 @@ python 2022SegmentationST/evaluation/evaluate.py --gold 2022SegmentationST/data/
 Output:
 ```
 category: all
-distance	2.83
-f_measure	48.04
-precision	48.35
-recall	47.74
+distance	2.50
+f_measure	54.13
+precision	53.94
+recall	54.32
 ```
 
 
