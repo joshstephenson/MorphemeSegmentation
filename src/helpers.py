@@ -24,7 +24,7 @@ def project_file(config, extension, suffix = None):
                 suffix +
                 '.' +
                 extension)
-    directory = config['model_dir']
+    directory = config['output_dir']
     if not os.path.isdir(directory):
         os.makedirs(directory)
     return os.path.join(directory, filename)

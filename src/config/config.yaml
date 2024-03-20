@@ -1,5 +1,5 @@
 language: hun
-model_dir: model
+output_dir: output
 data_dir: ../2022SegmentationST/data
 model_suffix: -by_char
 model_ext: pt

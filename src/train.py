@@ -115,7 +115,7 @@ def main():
     criterion = config.criterion(data.train.pad_index)
 
     # If training is enabled in config.yaml, we will actually train the model
-    # Otherwise we'll just load the previously saved model from config['model_dir']
+    # Otherwise we'll just load the previously saved model from config['output_dir']
     if config.training_enabled():
         best_valid_loss = float("inf")
         early_stopping = EarlyStopping(patience = config['training']['early_stopping'], verbose = True, path = config.model_file)

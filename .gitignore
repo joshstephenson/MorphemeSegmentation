@@ -191,7 +191,7 @@ bin/wheel
 pyvenv.cfg
 share/man/man1/isympy.1
 src/cuts.py
-src/model/
+src/output/
 src/data/ces.sentence.dev.tsv
 src/data/ces.sentence.test.gold.tsv
 src/data/ces.sentence.test.tsv
