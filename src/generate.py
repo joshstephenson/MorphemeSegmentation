@@ -47,10 +47,7 @@ def main():
         command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
         print(pred_file)
         output = subprocess.run(command)
-        labels = ",".join([aa[0] for aa in [a.split('\t') for a in output.split("\n")[1:]]])
-        values = ",".join([aa[1] for aa in [a.split('\t') for a in output.split("\n")[1:]]])
-        print(labels)
-        print(values)
+        print(output)
 
     write_predictions(dataset)
     test_predictions()
