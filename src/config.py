@@ -4,6 +4,7 @@ import os.path as pt
 import torch
 import torch.optim as optim
 import torch.nn as nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 logger = get_logger()
 
@@ -40,9 +41,12 @@ class Config():
             exit(1)
         return device
 
-    def optimizer(self, model):
+    def optimizer(self, model, include_scheduler = False):
         optimizer = optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
-        return optimizer
+        scheduler = None
+        if include_scheduler:
+            scheduler = ReduceLROnPlateau(optimizer, 'min')
+        return optimizer, scheduler
 
     def criterion(self, pad_index):
         return nn.CrossEntropyLoss(ignore_index=pad_index)

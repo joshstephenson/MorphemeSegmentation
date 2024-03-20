@@ -67,7 +67,7 @@ class Trainer():
         self.logger.info(self.model)
 
         # optimizer, scheduler = config.optimizer(model)
-        self.optimizer = self.config.optimizer(self.model)
+        self.optimizer, self.scheduler = self.config.optimizer(self.model, include_scheduler=True)
         self.criterion = self.config.criterion(self.data.train.pad_index)
 
         # For progress bar
@@ -90,6 +90,7 @@ class Trainer():
         for i in range(config['training']['epochs']):
             train_loss = self.train_fn()
             valid_loss = self.validate_fn()
+            self.scheduler.step(valid_loss)
             early_stopping(valid_loss, self.model)
 
             learning_rate = self.optimizer.state_dict()["param_groups"][0]["lr"]
