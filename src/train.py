@@ -78,11 +78,11 @@ def train_fn(model, data_loader, optimizer, criterion, device, **kwargs):
         torch.nn.utils.clip_grad_norm_(model.parameters(), kwargs['clip'])
         optimizer.step()
         epoch_loss += loss.item()
-        if i % 100 == 0:
+        if i % 1000 == 0:
             logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
     return epoch_loss / len(data_loader)
 
-def evaluate_fn(model, data_loader, criterion, scheduler, device):
+def validate_fn(model, data_loader, criterion, scheduler, device):
     model.eval()
     epoch_loss = 0
     with torch.no_grad():
@@ -128,7 +128,7 @@ def main():
                 device,
                 **config['training']
             )
-            valid_loss = evaluate_fn(
+            valid_loss = validate_fn(
                 model,
                 data.validation.loader,
                 criterion,
@@ -147,7 +147,7 @@ def main():
 
             model.load_from_file(config.model_file)
 
-            test_loss = evaluate_fn(model, data.test.loader, criterion, scheduler, device)
+            test_loss = validate_fn(model, data.test.loader, criterion, scheduler, device)
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
     else:
         logger.info("Training disabled in config.yaml")
