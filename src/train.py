@@ -3,7 +3,7 @@ from morpheme_data import MorphemeDataLoader
 from models import *
 import numpy as np
 import torch
-import tqdm
+from tqdm import tqdm
 from config import Config
 
 
@@ -56,101 +56,111 @@ class EarlyStopping:
         torch.save(model.state_dict(), self.path)
         self.val_loss_min = val_loss
 
-def train_fn(model, data_loader, optimizer, criterion, device, **kwargs):
-    model.train()
-    epoch_loss = 0
-    for i, batch in enumerate(data_loader):
-        # logger.info(f"BATCH: {batch}")
-        word = batch["word_ids"].to(device)
-        morphs = batch["morph_ids"].to(device)
-        # word = [word length, batch size]
-        # morphs = [morphs length, batch size]
-        optimizer.zero_grad()
-        output = model(word, morphs, kwargs['teacher_forcing_ratio'])
-        # output = [morphs length, batch size, morphs vocab size]
-        output_dim = output.shape[-1]
-        output = output[1:].view(-1, output_dim)
-        # output = [(morphs length - 1) * batch size, morphs vocab size]
-        morphs = morphs[1:].view(-1)
-        # morphs = [(morphs length - 1) * batch size]
-        loss = criterion(output, morphs)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), kwargs['clip'])
-        optimizer.step()
-        epoch_loss += loss.item()
-        if i % 1000 == 0:
-            logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
-    return epoch_loss / len(data_loader)
 
-def validate_fn(model, data_loader, criterion, scheduler, device):
-    model.eval()
-    epoch_loss = 0
-    with torch.no_grad():
-        for i, batch in enumerate(data_loader):
-            word = batch["word_ids"].to(device)
-            morphs = batch["morph_ids"].to(device)
+class Trainer():
+    def __init__(self):
+        self.config = Config()
+        self.logger = get_logger()
+        self.data = MorphemeDataLoader(config)
+        self.device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+        self.model = Seq2Seq(self.data.train.word_len, self.data.train.morph_len, self.device).to(self.device)
+        self.logger.info(self.model)
+
+        # optimizer, scheduler = config.optimizer(model)
+        self.optimizer = self.config.optimizer(self.model)
+        self.criterion = self.config.criterion(self.data.train.pad_index)
+
+        # For progress bar
+        self.progress_bar = tqdm(total=len(self.data.train.words) * self.config['training']['epochs'])
+        self.progress_count = 0
+
+    def training_callback(self):
+        self.progress_count += self.config['preprocessing']['batch_size']
+        self.progress_bar.update(self.progress_count)
+
+    def run(self):
+        if not self.config.training_enabled():
+            logger.info("Training disabled in config.yaml")
+            exit(0)
+
+        # best_valid_loss = float("inf")
+        early_stopping = EarlyStopping(patience=config['training']['early_stopping'], verbose=True,
+                                       path=config.model_file)
+
+        for _ in range(config['training']['epochs']):
+            train_loss = self.train_fn()
+            valid_loss = self.validate_fn()
+            early_stopping(valid_loss, self.model)
+
+            learning_rate = self.optimizer.state_dict()["param_groups"][0]["lr"]
+            self.logger.info(f'Learning rate is now: {learning_rate}')
+
+            #            if valid_loss < best_valid_loss:
+            #                best_valid_loss = valid_loss
+            logger.info(f"\n\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
+            logger.info(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
+
+            self.model.load_from_file(config.model_file)
+
+            test_loss = self.validate_fn(use_test = True)
+            logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
+
+            if early_stopping.early_stop:
+                logger.info("Stopping early...")
+                break
+
+    def train_fn(self):
+        kwargs = self.config['training']
+        self.model.train()
+        epoch_loss = 0
+        for i, batch in enumerate(self.data.train.loader):
+            word = batch["word_ids"].to(self.device)
+            morphs = batch["morph_ids"].to(self.device)
             # word = [word length, batch size]
             # morphs = [morphs length, batch size]
-            output = model(word, morphs, 0)  # turn off teacher forcing
+            self.optimizer.zero_grad()
+            output = self.model(word, morphs, kwargs['teacher_forcing_ratio'])
             # output = [morphs length, batch size, morphs vocab size]
             output_dim = output.shape[-1]
             output = output[1:].view(-1, output_dim)
             # output = [(morphs length - 1) * batch size, morphs vocab size]
             morphs = morphs[1:].view(-1)
             # morphs = [(morphs length - 1) * batch size]
-            loss = criterion(output, morphs)
-            scheduler.step(loss)
+            loss = self.criterion(output, morphs)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
+            self.optimizer.step()
             epoch_loss += loss.item()
-    return epoch_loss / len(data_loader)
+            self.training_callback()
+            # if i % 1000 == 0:
+        logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
+        return epoch_loss / len(self.data.train.loader)
+
+    def validate_fn(self, use_test = False):
+        self.model.eval()
+        epoch_loss = 0
+        loader = self.data.test.loader if use_test else self.data.validation.loader
+        with torch.no_grad():
+            for i, batch in enumerate(loader):
+                word = batch["word_ids"].to(self.device)
+                morphs = batch["morph_ids"].to(self.device)
+                # word = [word length, batch size]
+                # morphs = [morphs length, batch size]
+                output = self.model(word, morphs, 0)  # turn off teacher forcing
+                # output = [morphs length, batch size, morphs vocab size]
+                output_dim = output.shape[-1]
+                output = output[1:].view(-1, output_dim)
+                # output = [(morphs length - 1) * batch size, morphs vocab size]
+                morphs = morphs[1:].view(-1)
+                # morphs = [(morphs length - 1) * batch size]
+                loss = self.criterion(output, morphs)
+                epoch_loss += loss.item()
+        return epoch_loss / len(self.data_loader)
 
 def main():
-    config = Config()
-    data = MorphemeDataLoader(config)
-    device = config.device() # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
-    model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
-    logger.info(model)
+    trainer = Trainer()
+    trainer.run()
 
-    # optimizer, scheduler = config.optimizer(model)
-    optimizer, scheduler = config.optimizer(model)
-    criterion = config.criterion(data.train.pad_index)
-
-    # If training is enabled in config.yaml, we will actually train the model
-    # Otherwise we'll just load the previously saved model from config['output_dir']
-    if config.training_enabled():
-        best_valid_loss = float("inf")
-        early_stopping = EarlyStopping(patience = config['training']['early_stopping'], verbose = True, path = config.model_file)
-        for _ in tqdm.tqdm(range(config['training']['epochs'])):
-            train_loss = train_fn(
-                model,
-                data.train.loader,
-                optimizer,
-                criterion,
-                device,
-                **config['training']
-            )
-            valid_loss = validate_fn(
-                model,
-                data.validation.loader,
-                criterion,
-                scheduler,
-                device,
-            )
-            early_stopping(valid_loss, model)
-            if early_stopping.early_stop:
-                logger.info("Early Stopping...")
-                break
-
-#            if valid_loss < best_valid_loss:
-#                best_valid_loss = valid_loss
-            logger.info(f"\n\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
-            logger.info(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
-
-            model.load_from_file(config.model_file)
-
-            test_loss = validate_fn(model, data.test.loader, criterion, scheduler, device)
-            logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
-    else:
-        logger.info("Training disabled in config.yaml")
 
 if __name__ == '__main__':
     main()

@@ -40,18 +40,9 @@ class Config():
             exit(1)
         return device
 
-    def optimizer(self, model, include_scheduler = True):
+    def optimizer(self, model):
         optimizer = optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
-        # optimizer = optim.Adam(model.parameters())
-        scheduler = None
-        if include_scheduler:
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                   mode='min',
-                                                   factor=0.1,
-                                                   patience=10,
-                                                   threshold=0.0001,
-                                                   threshold_mode='abs')
-        return optimizer, scheduler
+        return optimizer
 
     def criterion(self, pad_index):
         return nn.CrossEntropyLoss(ignore_index=pad_index)
