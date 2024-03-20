@@ -87,7 +87,7 @@ class Trainer():
         early_stopping = EarlyStopping(patience=config['training']['early_stopping'], verbose=True,
                                        path=config.model_file)
 
-        for _ in range(config['training']['epochs']):
+        for i in range(config['training']['epochs']):
             train_loss = self.train_fn()
             valid_loss = self.validate_fn()
             early_stopping(valid_loss, self.model)
@@ -106,7 +106,7 @@ class Trainer():
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
             if early_stopping.early_stop:
-                logger.info("Stopping early...")
+                logger.info(f"Stopping early after {i} epochs.")
                 break
 
     def train_fn(self):
