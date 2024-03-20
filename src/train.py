@@ -75,7 +75,7 @@ class Trainer():
         self.progress_count = 0
 
     def training_callback(self):
-        self.progress_count += self.config['preprocessing']['batch_size']
+        self.progress_count += 1 #self.config['preprocessing']['batch_size']
         self.progress_bar.update(self.progress_count)
 
     def run(self):
