@@ -21,7 +21,7 @@ class MorphemeDataLoader:
             data_dir = config['data_dir']
             return pt.join(pt.dirname(pt.abspath(__file__)), data_dir, f'{self.lang}.word.{dset}.tsv')
 
-        def get_data(path):
+        def get_data(path, label = 'Training'):
             if os.path.exists(path):
                 table = pd.read_table(path, sep='\t', header=None)
                 table.columns = ['words', 'morph_str', 'identifier']
@@ -34,18 +34,19 @@ class MorphemeDataLoader:
                 words = [[SOS_TOKEN] + list(w) + [EOS_TOKEN] for w in table['words'].to_numpy()]
                 morphs = [[SOS_TOKEN] + list(m) + [EOS_TOKEN] for m in table['morph_str'].to_numpy()]
                 # word_classes = table['identifier'].to_numpy()
-                return self.Wrapper(words, morphs, config)
+                return self.Wrapper(words, morphs, config, label)
             else:
                 logging.critical(f'No such file: {path}')
 
-        self.train = get_data(get_path('train'))
-        self.test = get_data(get_path('test.gold'))
-        self.validation = get_data(get_path('dev'))
+        self.train = get_data(get_path('train'), 'Training')
+        self.test = get_data(get_path('test.gold'), 'Test')
+        self.validation = get_data(get_path('dev'), 'Validation')
 
     class Wrapper:
-        def __init__(self, words, morphs, config):
+        def __init__(self, words, morphs, config, label = 'Training'):
             self.words = words
             self.morphs = morphs
+            self.label = label
             # self.word_classes = word_classes
 
             special_tokens = config['special_tokens'].values()
@@ -73,6 +74,7 @@ class MorphemeDataLoader:
 
             self.word_len = len(self.word_vocab)
             self.morph_len = len(self.morph_vocab)
+            self.word_count = len(self.words)
 
             ids = Dataset.from_dict({"word_ids": [self.word_vocab.lookup_indices(word) for word in self.words],
                                      "morph_ids": [self.morph_vocab.lookup_indices(morph_set) for morph_set in
