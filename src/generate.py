@@ -1,10 +1,11 @@
 import logging
 
-from predict import segment_word2
+from predict import segment_word, segment_word2
 from helpers import postprocess
 from morpheme_data import MorphemeDataLoader
 from models import *
 from helpers import *
+from tqdm import tqdm
 
 config = Config()
 logger = get_logger()
@@ -25,13 +26,13 @@ def main():
     assert pred_file is not None
 
     dataset = data.test
-    logger.setLevel(logging.WARN)
+    # logger.setLevel(logging.WARN)
     with open(pred_file, 'w') as f:
-        for word, morphs in dataset[:]:
+        for word, morphs in tqdm(dataset[:], total = len(data.test.words)):
             pred = segment_word2(word, model, dataset, device)
             pred = postprocess(pred)
             line = "".join(word[1:-1]) + '\t' + pred
-            logger.info(line + " (" + "".join(morphs[1:-1]) + ")")
+            # logger.info(line + " (" + "".join(morphs[1:-1]) + ")")
             f.write(line + "\n")
     logger.info(f"Predictions written to: {pred_file}")
 
