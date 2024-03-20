@@ -24,7 +24,7 @@ class Config():
         self.config = config
 
         # Where we store the generated model
-        self.model_file = project_file(self, self.config['model_ext'], self.config['model_suffix'])
+        self.model_file = project_file(self.config, self.config['model_ext'], self.config['model_suffix'])
         assert self.model_file is not None
 
     def device(self):
