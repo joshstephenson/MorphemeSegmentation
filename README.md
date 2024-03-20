@@ -40,10 +40,10 @@ python 2022SegmentationST/evaluation/evaluate.py --gold 2022SegmentationST/data/
 Output:
 ```
 category: all
-distance	2.83
-f_measure	48.04
-precision	48.35
-recall	47.74
+distance	2.50
+f_measure	54.13
+precision	53.94
+recall	54.32
 ```
 
 
