@@ -118,7 +118,7 @@ def main():
     # Otherwise we'll just load the previously saved model from config['model_dir']
     if config.training_enabled():
         best_valid_loss = float("inf")
-        early_stopping = EarlyStopping(patience = 3, verbose = True, path = config.model_file)
+        early_stopping = EarlyStopping(patience = config['training']['early_stopping'], verbose = True, path = config.model_file)
         for _ in tqdm.tqdm(range(config['training']['epochs'])):
             train_loss = train_fn(
                 model,
