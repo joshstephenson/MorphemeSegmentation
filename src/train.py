@@ -155,7 +155,7 @@ class Trainer():
                 # morphs = [(morphs length - 1) * batch size]
                 loss = self.criterion(output, morphs)
                 epoch_loss += loss.item()
-        return epoch_loss / len(self.data_loader)
+        return epoch_loss / len(loader)
 
 def main():
     trainer = Trainer()
