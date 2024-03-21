@@ -41,12 +41,8 @@ hun-embeddings_256-hidden_1024-n_layers_2-dropout_0.2-tfr_0.5-lr_0.001-clip_1.0-
 ```
 
 ### Evaluation
-- First, use `python generate.py` in the `src` directory of this repository to write the predictions to a TRV file in the `output/` directory. You can also use `python predict.py` to print predictions to STDOUT for debugging.
-- Next, use the `evaluation/evaluate.py` script from the competition's repository (`2022Segmentation/evaluation/`) to calculate F1 and other stats for the model. The following example is for Hungarian.
-
-```
-python 2022SegmentationST/evaluation/evaluate.py --gold 2022SegmentationST/data/hun.word.test.gold.tsv --guess hun-embeddings_256-hidden_1024-n_layers_2-dropout_0.2-tfr_0.5-lr_0.001-clip_1.0-by_char.pt
-```
+- Use `python generate.py` in the `src` directory of this repository to write the predictions to a TRV file in the `output/` directory. You can also use `python predict.py` to print predictions to STDOUT for debugging.
+- The generate script will also call the evaluation script from `2022SegmentationST` and the output will look something like this:
 
 Output:
 ```
