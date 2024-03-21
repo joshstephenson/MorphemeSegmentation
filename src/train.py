@@ -30,9 +30,9 @@ class PlateauWithEarlyStopping:
         self.early_stop = False
         self.val_loss_min = np.Inf
         self.delta = 0
-        self.min_lr = config['training']['learning_rate_min']
-        self.current_lr = config['training']['learning_rate']
-        self.step_factor = config['training']['learning_rate_factor']
+        self.min_lr = float(config['training']['learning_rate_min'])
+        self.current_lr = float(config['training']['learning_rate'])
+        self.step_factor = float(config['training']['learning_rate_factor'])
     def __call__(self, val_loss, model):
 
         score = val_loss

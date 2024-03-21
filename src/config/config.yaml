@@ -21,7 +21,7 @@ encoder_decoder:
 training:
   enabled: True
   learning_rate: 0.05 # This is the initial learning rate
-  learning_rate_min: 1e-4
+  learning_rate_min: 0.0001
   learning_rate_factor: 0.1
   patience: 2 # How many epochs without loss improvement until training is stopped (only after learning rate at min)
   epochs: 12 # training should be stopped by early stopping before this number
