@@ -5,6 +5,16 @@ Morpheme segmentation is the process of separating words into their fundamental 
 
 This project is an attempt at reproduction of [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model for morpheme segmentation which was the 2nd place winner in the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/), designed by the same team that won 1st place. To be clear: this is not DeepSPIN-2, but an attempt at recreating it based on the information shared in the paper.
 
+### The Data
+Here is a sample of the training data for Hungarian:
+```
+tanításokért	tanít @@ás @@ok @@ért	110
+Algériánál	Algéria @@nál	100
+metélőhagymába	metélő @@hagyma @@ba	101
+fülésztől	fül @@ész @@től	110
+```
+After training, the model is expected to be able to receive just the first column (the untokenized word) and be able to separate it into morphemes, with the ` @@` morpheme separator. The final column, which can be used for training has 3 bits that represent the types of morphology (inflection, derivation, & compounding).
+
 ### Setup
 - Make sure to clone this with `--recuse-submodules` to ensure you get the data from the competition.
 - After creating a virtual environment with `python -m venv <name>`, you can install necessary python libraries with `pip install -r requirements.txt` from the root directory of this repository.
@@ -31,12 +41,8 @@ hun-embeddings_256-hidden_1024-n_layers_2-dropout_0.2-tfr_0.5-lr_0.001-clip_1.0-
 ```
 
 ### Evaluation
-- First, use `python generate.py` in the `src` directory of this repository to write the predictions to a TRV file in the `output/` directory. You can also use `python predict.py` to print predictions to STDOUT for debugging.
-- Next, use the `evaluation/evaluate.py` script from the competition's repository (`2022Segmentation/evaluation/`) to calculate F1 and other stats for the model. The following example is for Hungarian.
-
-```
-python 2022SegmentationST/evaluation/evaluate.py --gold 2022SegmentationST/data/hun.word.test.gold.tsv --guess hun-embeddings_256-hidden_1024-n_layers_2-dropout_0.2-tfr_0.5-lr_0.001-clip_1.0-by_char.pt
-```
+- Use `python generate.py` in the `src` directory of this repository to write the predictions to a TRV file in the `output/` directory. You can also use `python predict.py` to print predictions to STDOUT for debugging.
+- The generate script will also call the evaluation script from `2022SegmentationST` and the output will look something like this:
 
 Output:
 ```
