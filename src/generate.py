@@ -27,7 +27,7 @@ def main():
 
     def write_predictions(dataset, use_heuristic=False):
         pred_file = project_file(config, config['predictions_ext'],
-                                 config['model_suffix'] + '-heuristic' if use_heuristic else '')
+                                 config['model_suffix'] + '-test' + '-heuristic' if use_heuristic else '')
         assert pred_file is not None
         description = 'Writing predictions with heuristic...' if use_heuristic else 'Writing predictions...'
         with open(pred_file, 'w') as f:
