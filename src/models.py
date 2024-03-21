@@ -126,6 +126,7 @@ class Seq2Seq(nn.Module):
 
     def save(self):
         torch.save(self.state_dict(), config.model_file)
+        config.info(f'saved model to: {config.model_file}')
 
     def load_from_file(self, file):
         if not os.path.exists(file):

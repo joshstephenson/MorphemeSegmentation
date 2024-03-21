@@ -19,7 +19,7 @@ def project_file(config, extension, suffix = None):
                 '-n_layers_' + str(config['encoder_decoder']['n_layers']) +
                 '-dropout_' + str(config['encoder_decoder']['dropout']) +
                 '-tfr_' + str(config['training']['teacher_forcing_ratio']) +
-                '-lr_' + str(config['training']['learning_rate']) +
+                '-lr_min_' + str(config['training']['learning_rate_min']) +
                 '-clip_' + str(config['training']['clip']) +
                 '-es_' + str(config['training']['early_stopping']) +
                 suffix +
