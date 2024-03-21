@@ -22,7 +22,9 @@ class Encoder(nn.Module):
         self.hidden_dim = config['encoder_decoder']['hidden_dim']
         self.n_layers = config['encoder_decoder']['n_layers']
         self.embedding = nn.Embedding(input_dim, config['encoder_decoder']['embedding_dim'])
-        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'], config['encoder_decoder']['n_layers'], dropout=config['encoder_decoder']['dropout'])
+        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'],
+                           config['encoder_decoder']['n_layers'], dropout=config['encoder_decoder']['dropout'],
+                           bidirectional=config['encoder_decoder']['bidirectional'])
         self.dropout = nn.Dropout(config['encoder_decoder']['dropout'])
 
     def forward(self, src):
@@ -43,8 +45,11 @@ class Decoder(nn.Module):
         self.hidden_dim = config['encoder_decoder']['hidden_dim']
         self.n_layers = config['encoder_decoder']['n_layers']
         self.embedding = nn.Embedding(output_dim, config['encoder_decoder']['embedding_dim'])
-        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'], config['encoder_decoder']['n_layers'], dropout=config['encoder_decoder']['dropout'])
-        self.fc_out = nn.Linear(config['encoder_decoder']['hidden_dim'], output_dim)
+        bidirectional = config['encoder_decoder']['bidirectional']
+        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'],
+                           config['encoder_decoder']['n_layers'], dropout=config['encoder_decoder']['dropout'],
+                           bidirectional=bidirectional)
+        self.fc_out = nn.Linear(config['encoder_decoder']['hidden_dim'] * (2 if bidirectional else 1), output_dim)
         self.dropout = nn.Dropout(config['encoder_decoder']['dropout'])
 
     def forward(self, input, hidden, cell):

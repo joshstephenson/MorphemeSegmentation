@@ -43,6 +43,7 @@ class Config():
 
     def optimizer(self, model, include_scheduler = False):
         optimizer = optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
+        # optimizer = optim.SGD(model.parameters(), lr=self['training']['learning_rate'], momentum=0.9)
         scheduler = None
         if include_scheduler:
             scheduler = ReduceLROnPlateau(optimizer, 'min')
