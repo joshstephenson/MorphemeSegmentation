@@ -15,7 +15,7 @@ encoder_decoder:
   bidirectional: False
   embedding_dim: 64
   hidden_dim: 512
-  n_layers: 1
+  n_layers: 2
   dropout: 0.5
 
 training:
@@ -27,6 +27,7 @@ training:
   epochs: 12 # training should be stopped by early stopping before this number
   teacher_forcing_ratio: 0.5
   clip: 1.0
+  loss_criterion: cross entropy
 
 predictions:
   max_output: 65 # length of longest morpheme string + 2

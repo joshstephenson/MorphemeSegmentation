@@ -46,7 +46,12 @@ class Config():
         return optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
 
     def criterion(self, pad_index):
-        return Entmax15Loss(ignore_index=pad_index) #nn.CrossEntropyLoss(ignore_index=pad_index)
+        match self['training']['loss_criterion']:
+            case 'entmax':
+                return Entmax15Loss(ignore_index=pad_index)
+            case _:
+                return nn.CrossEntropyLoss(ignore_index=pad_index)
+
 
     def __getitem__(self, item):
         return self.config[item]
