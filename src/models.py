@@ -135,6 +135,7 @@ class Seq2Seq(nn.Module):
             exit(1)
         try:
             self.load_state_dict(torch.load(file))
+            logger.info(f"Loaded model from: {file}")
         except Exception as _:
             # we load this on the cpu when the model was generated on the hosted env
             self.load_state_dict(torch.load(file, map_location=torch.device('cpu')))
