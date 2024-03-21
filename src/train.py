@@ -67,16 +67,8 @@ class Trainer():
         self.logger.info(self.model)
 
         # optimizer, scheduler = config.optimizer(model)
-        self.optimizer, self.scheduler = self.config.optimizer(self.model, include_scheduler=True)
+        self.optimizer, _ = self.config.optimizer(self.model, include_scheduler=False)
         self.criterion = self.config.criterion(self.data.train.pad_index)
-
-        # For progress bar
-        self.progress_bar = tqdm(total=len(self.data.train.words) * self.config['training']['epochs'])
-        self.progress_count = 0
-
-    def training_callback(self):
-        self.progress_count += 1 #self.config['preprocessing']['batch_size']
-        self.progress_bar.update(self.progress_count)
 
     def run(self):
         if not self.config.training_enabled():
@@ -87,14 +79,13 @@ class Trainer():
         early_stopping = EarlyStopping(patience=config['training']['early_stopping'], verbose=True,
                                        path=config.model_file)
 
-        for i in range(config['training']['epochs']):
+        for i in tqdm(range(config['training']['epochs'])):
             train_loss = self.train_fn()
             valid_loss = self.validate_fn()
-            self.scheduler.step(valid_loss)
             early_stopping(valid_loss, self.model)
 
-            learning_rate = self.scheduler.get_last_lr()
-            self.logger.info(f'Learning rate is now: {learning_rate}')
+            # learning_rate = self.scheduler.get_last_lr()
+            # self.logger.info(f'Learning rate is now: {learning_rate}')
 
             #            if valid_loss < best_valid_loss:
             #                best_valid_loss = valid_loss
@@ -132,7 +123,6 @@ class Trainer():
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
             self.optimizer.step()
             epoch_loss += loss.item()
-            self.training_callback()
             # if i % 1000 == 0:
         logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
