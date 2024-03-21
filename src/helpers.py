@@ -22,6 +22,7 @@ def project_file(config, extension, suffix = None):
                 '-lr_min_' + str(config['training']['learning_rate_min']) +
                 '-clip_' + str(config['training']['clip']) +
                 '-patience_' + str(config['training']['patience']) +
+                '-loss_' + str(config['training']['loss_criterion']) +
                 '-bi_' + str(config['encoder_decoder']['bidirectional']) +
                 suffix +
                 '.' +
