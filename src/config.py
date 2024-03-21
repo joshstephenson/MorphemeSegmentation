@@ -42,13 +42,8 @@ class Config():
             exit(1)
         return device
 
-    def optimizer(self, model, include_scheduler = False):
-        optimizer = optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
-        # optimizer = optim.SGD(model.parameters(), lr=self['training']['learning_rate'], momentum=0.9)
-        scheduler = None
-        if include_scheduler:
-            scheduler = ReduceLROnPlateau(optimizer, 'min')
-        return optimizer, scheduler
+    def optimizer(self, model):
+        return optim.Adam(model.parameters(), lr = self['training']['learning_rate'])
 
     def criterion(self, pad_index):
         return Entmax15Loss(ignore_index=pad_index) #nn.CrossEntropyLoss(ignore_index=pad_index)

@@ -7,9 +7,9 @@ from tqdm import tqdm
 from config import Config
 
 
-class EarlyStopping:
+class PlateauWithEarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, verbose=False, delta=0, path='checkpoint.pt', trace_func=print):
+    def __init__(self, optimizer, patience=2, initial_lr = 1e-1, min_lr = 1e-4, verbose=False, delta=0, path='checkpoint.pt', trace_func=print):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -23,31 +23,52 @@ class EarlyStopping:
             trace_func (function): trace print function.
                             Default: print
         """
+        self.optimizer = optimizer
         self.patience = patience
         self.verbose = verbose
         self.counter = 0
-        self.best_score = None
+        self.best_score = np.Inf
         self.early_stop = False
         self.val_loss_min = np.Inf
         self.delta = delta
         self.path = path
         self.trace_func = trace_func
+        self.min_lr = min_lr
+        self.current_lr = initial_lr
     def __call__(self, val_loss, model):
 
         score = -val_loss
 
-        if self.best_score is None:
+        if self.best_score > self.best_score + self.delta:
             self.best_score = score
             self.save_checkpoint(val_loss, model)
-        elif score < self.best_score + self.delta:
+            self.counter = 0
+        elif self.current_lr > self.min_lr:
+            self.set_learning_rate(self.current_lr / 10)
+            self.trace_func(f'Learning rate set to: #{self.current_lr}')
+        else: # Now check for early stopping
             self.counter += 1
             self.trace_func(f'Early stopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
-        else:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-            self.counter = 0
+
+    def set_learning_rate(self, new_lr):
+        for g in self.optimizer.param_groups:
+            g['lr'] = new_lr
+        self.current_lr = new_lr
+
+        # if self.best_score is None:
+        #     self.best_score = score
+        #     self.save_checkpoint(val_loss, model)
+        # elif score < self.best_score + self.delta:
+        #     self.counter += 1
+        #     self.trace_func(f'Early stopping counter: {self.counter} out of {self.patience}')
+        #     if self.counter >= self.patience:
+        #         self.early_stop = True
+        # else:
+        #     self.best_score = score
+        #     self.save_checkpoint(val_loss, model)
+        #     self.counter = 0
 
     def save_checkpoint(self, val_loss, model):
         '''Saves model when validation loss decrease.'''
@@ -67,7 +88,7 @@ class Trainer():
         self.logger.info(self.model)
 
         # optimizer, scheduler = config.optimizer(model)
-        self.optimizer, _ = self.config.optimizer(self.model, include_scheduler=False)
+        self.optimizer = self.config.optimizer(self.model)
         self.criterion = self.config.criterion(self.data.train.pad_index)
 
     def run(self):
@@ -76,8 +97,8 @@ class Trainer():
             exit(0)
 
         # best_valid_loss = float("inf")
-        early_stopping = EarlyStopping(patience=config['training']['early_stopping'], verbose=True,
-                                       path=config.model_file)
+        early_stopping = PlateauWithEarlyStopping(self.optimizer, initial_lr=1e-1, min_lr=1e-4, patience=config['training']['early_stopping'], verbose=True,
+                                       path=config.model_file, trace_func=logger.info)
 
         for i in range(config['training']['epochs']):
             logger.info(f"Epoch {i+1}")

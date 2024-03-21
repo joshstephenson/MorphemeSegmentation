@@ -20,7 +20,7 @@ encoder_decoder:
 
 training:
   enabled: True
-  learning_rate: 0.001
+  learning_rate: 0.1
   epochs: 25 # training should be stopped by early stopping before this number
   teacher_forcing_ratio: 0.5
   clip: 1.0
