@@ -37,7 +37,7 @@ def main():
                                                                                                       dataset, device)
                     Config.warn(f"Unable to segment word: {word}")
                 except Exception as _:
-                    pred = word
+                    pred = "".join(word)
                 pred = postprocess(pred)
                 line = "".join(word[1:-1]) + '\t' + pred
                 # logger.info(line + " (" + "".join(morphs[1:-1]) + ")")
