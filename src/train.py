@@ -88,10 +88,10 @@ class Trainer():
 
             #            if valid_loss < best_valid_loss:
             #                best_valid_loss = valid_loss
-            logger.info(f"\n\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
+            logger.info(f"\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
             logger.info(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
 
-            self.model.load_from_file(config.model_file)
+            # self.model.load_from_file(config.model_file)
 
             test_loss = self._validate(use_test = True)
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
