@@ -32,12 +32,8 @@ def main():
         description = 'Writing predictions with heuristic...' if use_heuristic else 'Writing predictions...'
         with open(pred_file, 'w') as f:
             for word, morphs in tqdm(dataset[:], total=len(data.test.words), desc=description):
-                try:
-                    pred = segment_word2(word, model, dataset, device) if use_heuristic else segment_word(word, model,
+                pred = segment_word2(word, model, dataset, device) if use_heuristic else segment_word(word, model,
                                                                                                       dataset, device)
-                    logger.warn(f"Unable to segment word: {word}")
-                except Exception as _:
-                    pred = "".join(word)
                 pred = postprocess(pred)
                 line = "".join(word[1:-1]) + '\t' + pred
                 # logger.info(line + " (" + "".join(morphs[1:-1]) + ")")
