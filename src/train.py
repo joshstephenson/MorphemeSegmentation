@@ -80,7 +80,7 @@ class Trainer():
                                        path=config.model_file)
 
         for i in range(config['training']['epochs']):
-            logger.info(f"Epoch {i}")
+            logger.info(f"Epoch {i+1}")
             train_loss = self._train()
             valid_loss = self._validate()
 
