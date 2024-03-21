@@ -41,7 +41,7 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, model)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            self.trace_func(f'Early stopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -99,6 +99,7 @@ class Trainer():
 
             early_stopping(valid_loss, self.model)
             if early_stopping.early_stop:
+                self.model.load_from_file(config.model_file) # reload the lowest valid loss checkpoint
                 logger.info(f"Stopping early after {i} epochs.")
                 break
 
