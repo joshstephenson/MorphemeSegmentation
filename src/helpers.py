@@ -21,7 +21,7 @@ def project_file(config, extension, suffix = None):
                 '-tfr_' + str(config['training']['teacher_forcing_ratio']) +
                 '-lr_min_' + str(config['training']['learning_rate_min']) +
                 '-clip_' + str(config['training']['clip']) +
-                '-es_' + str(config['training']['early_stopping']) +
+                '-patience_' + str(config['training']['patience']) +
                 suffix +
                 '.' +
                 extension)
