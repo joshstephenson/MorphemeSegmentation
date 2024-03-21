@@ -93,7 +93,7 @@ class Trainer():
             self.scheduler.step(valid_loss)
             early_stopping(valid_loss, self.model)
 
-            learning_rate = self.optimizer.state_dict()["param_groups"][0]["lr"]
+            learning_rate = self.scheduler.get_last_lr()
             self.logger.info(f'Learning rate is now: {learning_rate}')
 
             #            if valid_loss < best_valid_loss:
