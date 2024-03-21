@@ -44,10 +44,10 @@ class PlateauWithEarlyStopping:
         elif self.current_lr > self.min_lr:
             self.set_learning_rate(self.current_lr * self.step_factor)
         else: # Now check for early stopping
-            self.counter += 1
+            # self.counter += 1
             logger.info(f'Early stopping counter: {self.counter} out of {self.patience}')
-            if self.counter >= self.patience:
-                self.early_stop = True
+            # if self.counter >= self.patience:
+            self.early_stop = True
 
     def set_learning_rate(self, new_lr):
         new_lr = max(self.min_lr, new_lr)

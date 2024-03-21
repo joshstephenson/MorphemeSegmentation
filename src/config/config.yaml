@@ -12,15 +12,15 @@ preprocessing:
   initial_weights: 0.8
 
 encoder_decoder:
-  bidirectional: True
+  bidirectional: False
   embedding_dim: 64
   hidden_dim: 512
-  n_layers: 2
-  dropout: 0.3
+  n_layers: 1
+  dropout: 0.5
 
 training:
   enabled: True
-  learning_rate: 0.05 # This is the initial learning rate
+  learning_rate: 0.01 # This is the initial learning rate
   learning_rate_min: 0.0001
   learning_rate_factor: 0.1
   patience: 1 # How many epochs without loss improvement until training is stopped (only after learning rate at min)
