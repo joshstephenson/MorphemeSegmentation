@@ -26,7 +26,7 @@ def project_file(config, extension, suffix = None):
                 '-bi_' + str(config['encoder_decoder']['bidirectional']) +
                 suffix +
                 '.' +
-                extension)
+                extension).replace(' ', '')
     directory = config['output_dir']
     if not os.path.isdir(directory):
         os.makedirs(directory)
