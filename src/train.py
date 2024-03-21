@@ -29,7 +29,7 @@ class PlateauWithEarlyStopping:
         self.best_score = np.Inf
         self.early_stop = False
         self.val_loss_min = np.Inf
-        self.delta = 0
+        self.delta = 0.5
         self.min_lr = float(config['training']['learning_rate_min'])
         self.current_lr = float(config['training']['learning_rate'])
         self.step_factor = float(config['training']['learning_rate_factor'])
@@ -44,10 +44,10 @@ class PlateauWithEarlyStopping:
         elif self.current_lr > self.min_lr:
             self.set_learning_rate(self.current_lr * self.step_factor)
         else: # Now check for early stopping
-            # self.counter += 1
+            self.counter += 1
             logger.info(f'Early stopping counter: {self.counter} out of {self.patience}')
-            # if self.counter >= self.patience:
-            self.early_stop = True
+            if self.counter >= self.patience:
+                self.early_stop = True
 
     def set_learning_rate(self, new_lr):
         new_lr = max(self.min_lr, new_lr)
@@ -143,7 +143,8 @@ class Trainer():
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
             self.optimizer.step()
             epoch_loss += loss.item()
-            # if i % 1000 == 0:
+            # if i % 100 == 0:
+            #     logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
 
