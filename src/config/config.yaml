@@ -16,7 +16,7 @@ encoder_decoder:
   embedding_dim: 64
   hidden_dim: 512
   n_layers: 2
-  dropout: 0.2
+  dropout: 0.3
 
 training:
   enabled: True

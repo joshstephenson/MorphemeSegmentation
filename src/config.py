@@ -5,6 +5,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from entmax.losses import Entmax15Loss
 
 logger = get_logger()
 
@@ -50,7 +51,7 @@ class Config():
         return optimizer, scheduler
 
     def criterion(self, pad_index):
-        return nn.CrossEntropyLoss(ignore_index=pad_index)
+        return Entmax15Loss(ignore_index=pad_index) #nn.CrossEntropyLoss(ignore_index=pad_index)
 
     def __getitem__(self, item):
         return self.config[item]
