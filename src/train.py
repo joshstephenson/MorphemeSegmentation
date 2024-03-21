@@ -45,7 +45,7 @@ class PlateauWithEarlyStopping:
             self.set_learning_rate(self.current_lr * self.step_factor)
         else: # Now check for early stopping
             self.counter += 1
-            config.info(f'Early stopping counter: {self.counter} out of {self.patience}')
+            logger.info(f'Early stopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
 
@@ -53,7 +53,7 @@ class PlateauWithEarlyStopping:
         for g in self.optimizer.param_groups:
             g['lr'] = new_lr
         self.current_lr = new_lr
-        config.info(f'Learning rate set to: {self.current_lr}')
+        logger.info(f'Learning rate set to: {self.current_lr}')
 
         # if self.best_score is None:
         #     self.best_score = score
