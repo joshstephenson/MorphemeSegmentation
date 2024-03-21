@@ -50,6 +50,7 @@ class PlateauWithEarlyStopping:
                 self.early_stop = True
 
     def set_learning_rate(self, new_lr):
+        new_lr = max(self.min_lr, new_lr)
         for g in self.optimizer.param_groups:
             g['lr'] = new_lr
         self.current_lr = new_lr
