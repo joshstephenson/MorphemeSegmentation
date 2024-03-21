@@ -79,10 +79,9 @@ class Trainer():
         early_stopping = EarlyStopping(patience=config['training']['early_stopping'], verbose=True,
                                        path=config.model_file)
 
-        for i in tqdm(range(config['training']['epochs'])):
-            train_loss = self.train_fn()
-            valid_loss = self.validate_fn()
-            early_stopping(valid_loss, self.model)
+        for i in range(config['training']['epochs']):
+            train_loss = self._train(i)
+            valid_loss = self._validate(i)
 
             # learning_rate = self.scheduler.get_last_lr()
             # self.logger.info(f'Learning rate is now: {learning_rate}')
@@ -94,18 +93,19 @@ class Trainer():
 
             self.model.load_from_file(config.model_file)
 
-            test_loss = self.validate_fn(use_test = True)
+            test_loss = self._validate(use_test = True)
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
+            early_stopping(valid_loss, self.model)
             if early_stopping.early_stop:
                 logger.info(f"Stopping early after {i} epochs.")
                 break
 
-    def train_fn(self):
+    def _train(self, epoch):
         kwargs = self.config['training']
         self.model.train()
         epoch_loss = 0
-        for i, batch in enumerate(self.data.train.loader):
+        for i, batch in tqdm(enumerate(self.data.train.loader), total=(self.data.train.word_count / config['preprocessing']['batch_size']), desc=f"{self.data.train.label}, epoch: {epoch}"):
             word = batch["word_ids"].to(self.device)
             morphs = batch["morph_ids"].to(self.device)
             # word = [word length, batch size]
@@ -127,12 +127,13 @@ class Trainer():
         logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
 
-    def validate_fn(self, use_test = False):
+    def _validate(self, epoch, use_test = False):
         self.model.eval()
         epoch_loss = 0
-        loader = self.data.test.loader if use_test else self.data.validation.loader
+        dataset = self.data.test if use_test else self.data.validation
+        loader = dataset.loader
         with torch.no_grad():
-            for i, batch in enumerate(loader):
+            for i, batch in tqdm(enumerate(loader), total=(dataset.word_count / config['preprocessing']['batch_size']), desc=f"{dataset.label}, epoch: {epoch}"):
                 word = batch["word_ids"].to(self.device)
                 morphs = batch["morph_ids"].to(self.device)
                 # word = [word length, batch size]
