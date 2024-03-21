@@ -39,13 +39,12 @@ class PlateauWithEarlyStopping:
 
         score = -val_loss
 
-        if self.best_score > self.best_score + self.delta:
+        if score > self.best_score + self.delta:
             self.best_score = score
             self.save_checkpoint(val_loss, model)
             self.counter = 0
         elif self.current_lr > self.min_lr:
             self.set_learning_rate(self.current_lr / 10)
-            self.trace_func(f'Learning rate set to: #{self.current_lr}')
         else: # Now check for early stopping
             self.counter += 1
             self.trace_func(f'Early stopping counter: {self.counter} out of {self.patience}')
@@ -56,6 +55,7 @@ class PlateauWithEarlyStopping:
         for g in self.optimizer.param_groups:
             g['lr'] = new_lr
         self.current_lr = new_lr
+        self.trace_func(f'Learning rate set to: {self.current_lr}')
 
         # if self.best_score is None:
         #     self.best_score = score
