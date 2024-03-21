@@ -35,7 +35,7 @@ def main():
                 try:
                     pred = segment_word2(word, model, dataset, device) if use_heuristic else segment_word(word, model,
                                                                                                       dataset, device)
-                    Config.warn(f"Unable to segment word: {word}")
+                    logger.warn(f"Unable to segment word: {word}")
                 except Exception as _:
                     pred = "".join(word)
                 pred = postprocess(pred)
