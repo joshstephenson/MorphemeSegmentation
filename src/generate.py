@@ -25,24 +25,23 @@ def main():
 
     dataset = data.test
 
-    def write_predictions(dataset, use_heuristic=False):
+    def write_predictions(dataset):
         pred_file = project_file(config, config['predictions_ext'],
-                                 config['model_suffix'] + '-test' + '-heuristic' if use_heuristic else '')
+                                 config['model_suffix'] + '-test')
         assert pred_file is not None
-        description = 'Writing predictions with heuristic...' if use_heuristic else 'Writing predictions...'
+        description = 'Writing predictions...'
         with open(pred_file, 'w') as f:
             for word, morphs in tqdm(dataset[:], total=len(data.test.words), desc=description):
-                pred = segment_word2(word, model, dataset, device) if use_heuristic else segment_word(word, model,
-                                                                                                      dataset, device)
+                pred = segment_word(word, model, dataset, device)
                 pred = postprocess(pred)
                 line = "".join(word[1:-1]) + '\t' + pred
-                # logger.info(line + " (" + "".join(morphs[1:-1]) + ")")
                 f.write(line + "\n")
         logger.info(f"Predictions written to: {pred_file}")
 
-    def test_predictions(use_heuristic=False):
+    def test_predictions():
         pred_file = project_file(config, config['predictions_ext'],
-                                 config['model_suffix'] + '-test' + '-heuristic' if use_heuristic else '')
+                                 config['model_suffix']
+                                 )
         lang = config['language']
         command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
         print(pred_file)
