@@ -12,7 +12,7 @@ preprocessing:
   initial_weights: 0.8
 
 encoder_decoder:
-  bidirectional: False
+  bidirectional: True
   embedding_dim: 64
   hidden_dim: 1024
   n_layers: 2
