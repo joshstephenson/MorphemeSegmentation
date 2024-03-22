@@ -27,6 +27,7 @@ class Config():
 
         # Where we store the generated model
         self.model_file = project_file(self.config, self.config['model_ext'], self.config['model_suffix'])
+
         assert self.model_file is not None
 
     def device(self):
@@ -56,6 +57,4 @@ class Config():
     def __getitem__(self, item):
         return self.config[item]
 
-    def training_enabled(self):
-        return self['training']['enabled']
 
