@@ -27,7 +27,7 @@ def main():
 
     def write_predictions(dataset):
         pred_file = project_file(config, config['predictions_ext'],
-                                 config['model_suffix'] + '-test')
+                                 config['model_suffix'])
         assert pred_file is not None
         description = 'Writing predictions...'
         with open(pred_file, 'w') as f:
