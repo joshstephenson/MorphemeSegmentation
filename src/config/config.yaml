@@ -13,7 +13,7 @@ preprocessing:
 
 encoder_decoder:
   bidirectional: True
-  embedding_dim: 64
+  embedding_dim: 512
   hidden_dim: 1024
   n_layers: 2
   dropout: 0.2
