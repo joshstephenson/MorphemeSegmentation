@@ -1,5 +1,6 @@
 import os
 import logging
+from pathlib import Path
 
 MORPH_SEPARATOR_INTERNAL = '|'
 MORPH_SEPARATOR_EXTERNAL = ' @@'
@@ -13,7 +14,7 @@ def postprocess(prediction):
 def project_file(config, extension, suffix = None):
     lang = config['language']
     suffix = suffix if suffix is not None else ''
-    filename = (lang +
+    config_description = (lang +
                 '-embeddings_' + str(config['encoder_decoder']['embedding_dim']) +
                 '-hidden_' + str(config['encoder_decoder']['hidden_dim']) +
                 '-n_layers_' + str(config['encoder_decoder']['n_layers']) +
@@ -24,12 +25,10 @@ def project_file(config, extension, suffix = None):
                 '-patience_' + str(config['training']['patience']) +
                 '-loss_' + str(config['training']['loss_criterion']) +
                 '-bi_' + str(config['encoder_decoder']['bidirectional']) +
-                suffix +
-                '.' +
-                extension).replace(' ', '')
-    directory = config['output_dir']
-    if not os.path.isdir(directory):
-        os.makedirs(directory)
+                          suffix).replace(' ', '')
+    directory = Path(os.path.join(config['output_dir'], config_description))
+    filename = f'{lang}{suffix}.{extension}'
+    directory.mkdir(parents=True, exist_ok=True)
     return os.path.join(directory, filename)
 
 def get_logger():
