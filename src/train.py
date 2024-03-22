@@ -34,15 +34,16 @@ class PlateauWithEarlyStopping:
         self.current_lr = float(config['training']['learning_rate'])
         self.step_factor = float(config['training']['learning_rate_factor'])
     def __call__(self, val_loss, model):
-
+        if not config['training']['early_stopping']:
+            return
         score = val_loss
 
         if score < self.best_score - self.delta:
             self.best_score = score
             self.save_checkpoint(val_loss, model)
             self.counter = 0 # reset the counter if we find a new best loss
-        elif self.current_lr > self.min_lr:
-            self.set_learning_rate(self.current_lr * self.step_factor)
+        # elif self.current_lr > self.min_lr:
+        #     self.set_learning_rate(self.current_lr * self.step_factor)
         else: # Now check for early stopping
             self.counter += 1
             logger.info(f'Early stopping counter: {self.counter} out of {self.patience}')
@@ -90,11 +91,6 @@ class Trainer():
         self.criterion = self.config.criterion(self.data.train.pad_index)
 
     def run(self):
-        if not self.config.training_enabled():
-            logger.info("Training disabled in config.yaml")
-            exit(0)
-
-        # best_valid_loss = float("inf")
         early_stopping = PlateauWithEarlyStopping(self.optimizer)
 
         for i in range(config['training']['epochs']):
@@ -115,6 +111,7 @@ class Trainer():
             test_loss = self._validate(use_test = True)
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
+            # Nothing will occur here if early_stopping is False in config.yaml
             early_stopping(valid_loss, self.model)
             if early_stopping.early_stop:
                 self.model.load_from_file(config.model_file) # reload the lowest valid loss checkpoint
@@ -125,7 +122,9 @@ class Trainer():
         kwargs = self.config['training']
         self.model.train()
         epoch_loss = 0
-        for i, batch in tqdm(enumerate(self.data.train.loader), total=(self.data.train.word_count / config['preprocessing']['batch_size']), desc=self.data.train.label):
+        # pbar = tqdm(self.data.train.word_count / config['preprocessing']['batch_size'], desc=self.data.train.label)
+        pbar = tqdm(self.data.train.loader, leave=False)
+        for i, batch in enumerate(pbar):
             word = batch["word_ids"].to(self.device)
             morphs = batch["morph_ids"].to(self.device)
             # word = [word length, batch size]
@@ -143,18 +142,19 @@ class Trainer():
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
             self.optimizer.step()
             epoch_loss += loss.item()
+            pbar.set_description(f"{self.data.train.label}. Loss: {loss:.3f} (batch), {epoch_loss:.3f} (epoch)")
             # if i % 100 == 0:
             #     logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
-        logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
+        logger.info(f'Batch {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
 
     def _validate(self, use_test = False):
         self.model.eval()
         epoch_loss = 0
         dataset = self.data.test if use_test else self.data.validation
-        loader = dataset.loader
+        pbar = tqdm(dataset.loader)
         with torch.no_grad():
-            for i, batch in tqdm(enumerate(loader), total=(dataset.word_count / config['preprocessing']['batch_size']), desc=dataset.label):
+            for i, batch in enumerate(pbar):
                 word = batch["word_ids"].to(self.device)
                 morphs = batch["morph_ids"].to(self.device)
                 # word = [word length, batch size]
@@ -168,7 +168,8 @@ class Trainer():
                 # morphs = [(morphs length - 1) * batch size]
                 loss = self.criterion(output, morphs)
                 epoch_loss += loss.item()
-        return epoch_loss / len(loader)
+                pbar.set_description(f"{dataset.label}. Loss: {loss:.3f} (batch), {epoch_loss:.3f} (epoch)")
+        return epoch_loss / len(dataset.loader)
 
 def main():
     trainer = Trainer()
