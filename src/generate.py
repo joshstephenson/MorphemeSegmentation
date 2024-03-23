@@ -44,10 +44,12 @@ def main():
                                  )
         results_file = project_file(config, config['results_ext'], config['model_suffix'])
         lang = config['language']
-        command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file, ">", results_file]
+        command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
         print(results_file)
         output = subprocess.run(command)
         print(output)
+        with open(results_file, 'w') as f:
+            f.writelines(output)
 
     write_predictions(dataset)
     test_predictions()
