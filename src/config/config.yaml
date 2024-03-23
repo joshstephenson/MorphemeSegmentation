@@ -4,6 +4,7 @@ data_dir: ../2022SegmentationST/data
 model_suffix: -by_char
 model_ext: pt
 predictions_ext: tsv
+results_ext: txt
 
 preprocessing:
   min_freq: 2
@@ -13,7 +14,7 @@ preprocessing:
 
 encoder_decoder:
   bidirectional: True
-  embedding_dim: 512
+  embedding_dim: 64
   hidden_dim: 1024
   n_layers: 2
   dropout: 0.2
@@ -21,7 +22,7 @@ encoder_decoder:
 training:
   early_stopping: True
   patience: 2 # How many epochs without loss improvement until training is stopped (only after learning rate at min)
-  learning_rate: 0.001 # This is the initial learning rate
+  learning_rate: 0.01 # This is the initial learning rate
   learning_rate_min: 0.0001
   learning_rate_factor: 0.1
   epochs: 12 # training should be stopped by early stopping before this number

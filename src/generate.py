@@ -42,9 +42,10 @@ def main():
         pred_file = project_file(config, config['predictions_ext'],
                                  config['model_suffix']
                                  )
+        results_file = project_file(config, config['results_ext'], config['model_suffix'])
         lang = config['language']
-        command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
-        print(pred_file)
+        command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file, ">", results_file]
+        print(results_file)
         output = subprocess.run(command)
         print(output)
 
