@@ -42,8 +42,8 @@ class PlateauWithEarlyStopping:
             self.best_score = score
             self.save_checkpoint(val_loss, model)
             self.counter = 0 # reset the counter if we find a new best loss
-        elif self.current_lr > self.min_lr:
-            self.set_learning_rate(self.current_lr * self.step_factor)
+        # elif self.current_lr > self.min_lr:
+        #     self.set_learning_rate(self.current_lr * self.step_factor)
         else: # Now check for early stopping
             self.counter += 1
             logger.info(f'Early stopping counter: {self.counter} out of {self.patience}')
