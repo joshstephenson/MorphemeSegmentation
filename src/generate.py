@@ -46,8 +46,8 @@ def main():
         lang = config['language']
         command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
         print(results_file)
-        output = subprocess.check_output(command)
-        print(output)
+        output = subprocess.run(command, capture_output=True).stdout.decode("utf-8")
+
         with open(results_file, 'w') as f:
             f.write(output)
 
