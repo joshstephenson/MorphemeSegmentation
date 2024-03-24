@@ -49,7 +49,7 @@ def main():
         output = subprocess.run(command)
         print(output)
         with open(results_file, 'w') as f:
-            f.writelines(output)
+            f.write(output)
 
     write_predictions(dataset)
     test_predictions()
