@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Adapted from a script by Ben Peterns which was adapted by a script by Kyle Gorman and Shijie Wu.
 #
 LANG=$1 # Should match the name of the languages available in ../2022SegmentationST/data
