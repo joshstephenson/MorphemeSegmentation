@@ -8,13 +8,17 @@ if [ -z "${LANG}" ]; then
 fi
 readonly LANG=$(echo $LANG | tr '[:upper:]' '[:lower:]')
 readonly DATASET="../2022SegmentationST/data/${LANG}.word"
-readonly IN_DIR="data/in/${LANG}"
-readonly OUT_DIR="data/out/${LANG}"
+readonly IN_DIR="data/${LANG}/in"
+readonly OUT_DIR="data/${LANG}/out"
+readonly MODEL_DIR="data/${LANG}/models"
 if [ ! -d "${IN_DIR}" ]; then
     mkdir -p "${IN_DIR}"
 fi
 if [ ! -d "${OUT_DIR}" ]; then
     mkdir -p "${OUT_DIR}"
+fi
+if [ ! -d "${MODEL_DIR}" ]; then
+    mkdir -p "${MODEL_DIR}"
 fi
 readonly SEED=1917
 readonly CRITERION=label_smoothed_cross_entropy
@@ -61,14 +65,15 @@ preprocess() {
         --tokenizer=space \
         --thresholdsrc=1 \
         --thresholdtgt=1 \
-        --destdir="../../out/${LANG}"
+        --destdir="../../${LANG}/out"
 
 }
 train() {
+    cd ../../..
     echo "Now in train"
     fairseq-train \
         "${OUT_DIR}/" \
-        --save-dir="${OUT_DIR}" \
+        --save-dir="${MODEL_DIR}" \
         --source-lang="src" \
         --target-lang="tgt" \
         --disable-validation \
