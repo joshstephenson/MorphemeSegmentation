@@ -3,6 +3,7 @@
 LANG=$1 # Should match the name of the languages available in ../2022SegmentationST/data
 if [ -z "${LANG}" ]; then
     echo "Please provide a language name. Options {ces|eng|fra|hun|ita|lat|mon|rus|spa}."
+    exit 1
 fi
 readonly LANG=$(echo $LANG | tr '[:upper:]' '[:lower:]')
 readonly DATASET="../2022SegmentationST/data/${LANG}.word"
