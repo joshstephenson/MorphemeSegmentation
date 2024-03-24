@@ -66,7 +66,6 @@ preprocess() {
         --thresholdsrc=1 \
         --thresholdtgt=1 \
         --destdir="../../${LANG}/out"
-
 }
 train() {
     cd ../../..
@@ -98,4 +97,12 @@ train() {
 }
 
 preprocess
+if [ $? -ne 0 ]; then
+    echo "The previous command failed. Stopping here"
+    exit 1
+fi
 train
+if [ $? -ne 0 ]; then
+    echo "The previous command failed. Stopping here"
+    exit 1
+fi
