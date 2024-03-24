@@ -61,10 +61,11 @@ preprocess() {
         --tokenizer=space \
         --thresholdsrc=1 \
         --thresholdtgt=1 \
-        --destdir="${OUT_DIR}"
+        --destdir="../../out/${LANG}"
 
 }
 train() {
+    echo "Now in train"
     fairseq-train \
         "${OUT_DIR}/" \
         --save-dir="${OUT_DIR}" \
