@@ -50,6 +50,7 @@ class Decoder(nn.Module):
         self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'],
                            config['encoder_decoder']['n_layers'],
                            bidirectional=bidirectional)
+        self.attention = nn.MultiheadAttention(config['encoder_decoder']['embedding_dim'], 4)
         self.fc_out = nn.Linear(config['encoder_decoder']['hidden_dim'] * (2 if bidirectional else 1), output_dim)
 
     def forward(self, input, hidden, cell):
