@@ -251,4 +251,5 @@ src/train.ipynb
 src/tut1-model.pt
 src/.DS_Store
 .DS_Store
-fairseq-based/data/
+fairseq-based/data/hun/out
+fairseq-based/data/hun/models
