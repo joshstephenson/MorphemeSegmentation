@@ -69,7 +69,7 @@ preprocess() {
         --target-lang="tgt" \
         --trainpref=train \
         --validpref=dev \
-        --testpref=test.gold
+        --testpref=test.gold \
         --tokenizer=space \
         --thresholdsrc=1 \
         --thresholdtgt=1 \
