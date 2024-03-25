@@ -5,17 +5,18 @@ model_suffix: -by_char
 model_ext: pt
 predictions_ext: tsv
 results_ext: txt
+seed: 1234
 
 preprocessing:
   min_freq: 2
-  batch_size: 128
+  batch_size: 512
   shuffle: False
   initial_weights: 0.8
 
 encoder_decoder:
   bidirectional: True
-  embedding_dim: 64
-  hidden_dim: 1024
+  embedding_dim: 256
+  hidden_dim: 256
   n_layers: 2
   dropout: 0.2
 

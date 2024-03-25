@@ -4,7 +4,7 @@ import os.path as pt
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+import random
 from entmax.losses import Entmax15Loss
 
 logger = get_logger()
@@ -24,6 +24,8 @@ class Config():
                 config = yaml.load(f, Loader=yaml.FullLoader)
 
         self.config = config
+        torch.manual_seed(config['seed'])
+        random.seed(config['seed'])
 
         # Where we store the generated model
         self.model_file = project_file(self.config, self.config['model_ext'], self.config['model_suffix'])
