@@ -48,18 +48,18 @@ readonly ENTMAX_ALPHA=1.5
 readonly BEAM=5
 
 preprocess() {
-#    for TASK in "train" "dev" "test.gold" ; do
-#        for FILE in "${DATASET}.${TASK}.tsv"; do
-#            SRC_FILE="${IN_DIR}/${TASK}.src"
-#            TGT_FILE="${IN_DIR}/${TASK}.tgt"
-#            # Segment the source strings by separating each grapheme (char)
-#            cut -f 1 "${FILE}" | sed 's/./& /g' > "${SRC_FILE}"
-#            # Segment the target strings by separating each morph
-#            # Change morph separator to single @ and spaces to underscores
-#            cut -f 2 "${FILE}" | sed 's/@@/|/g' > "${TGT_FILE}"
-#            echo "Created files: ${SRC_FILE} and ${TGT_FILE}"
-#        done
-#    done
+    for TASK in "train" "dev" "test.gold" ; do
+        for FILE in "${DATASET}.${TASK}.tsv"; do
+            SRC_FILE="${IN_DIR}/${TASK}.src"
+            TGT_FILE="${IN_DIR}/${TASK}.tgt"
+            # Segment the source strings by separating each grapheme (char)
+            cut -f 1 "${FILE}" | sed 's/./& /g' > "${SRC_FILE}"
+            # Segment the target strings by separating each morph
+            # Change morph separator to single @ and spaces to underscores
+            cut -f 2 "${FILE}" | sed 's/@@/|/g' > "${TGT_FILE}"
+            echo "Created files: ${SRC_FILE} and ${TGT_FILE}"
+        done
+    done
 
     echo "Moving on to fairseq-preprocess"
     BASE=$(basename $DATASET)
@@ -69,6 +69,7 @@ preprocess() {
         --target-lang="tgt" \
         --trainpref=train \
         --validpref=dev \
+        --testpref=test.gold
         --tokenizer=space \
         --thresholdsrc=1 \
         --thresholdtgt=1 \
@@ -152,7 +153,7 @@ if [ $? -ne 0 ]; then
     echo "The previous command failed. Stopping here"
     exit 1
 fi
-decode "${MODEL_DIR}" dev
+decode "${MODEL_DIR}" test
 if [ $? -ne 0 ]; then
     echo "It appears decoding failed. Check output."
     exit 1
