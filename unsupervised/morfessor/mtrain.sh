@@ -35,22 +35,21 @@ for dataset in train dev test; do
     cut -f 1 $IN_FILE | tr ' ' '_' > $TMP_FILE
 done
 
-TRAIN_FILE="${OUT_DIR}/train.tmp"
-DEV_FILE="${OUT_DIR}/dev.tmp"
-TEST_FILE="${OUT_DIR}/test.tmp"
-GOLD_FILE="${IN_DIR}/${LAN}.word.test.gold.tsv"
+readonly TRAIN_FILE="${OUT_DIR}/train.tmp"
+readonly TEST_FILE="${OUT_DIR}/test.tmp"
+readonly GOLD_FILE="${IN_DIR}/${LAN}.word.test.gold.tsv"
 
 # Check if model exists. If so, use it. If not, create it.
 if [ -f "${MODEL_FILE}" ]; then
     echo "${MODEL_FILE} found. Skipping training..."
 else
     echo "Training..."
-    morfessor-train -s $MODEL_FILE $TMP_FILE
+    morfessor-train -s $MODEL_FILE $TRAIN_FILE
 fi
 
 echo "Segmenting..."
-#morfessor-segment --output-format-separator ' @@' $DEV_FILE -l $MODEL_FILE | sed 's/_/ /g' > $OUT_FILE
-morfessor-segment $DEV_FILE -l $MODEL_FILE | sed 's/_/ /g' | sed 's/ / @@/g' > $OUT_FILE
+#morfessor-segment --output-format-separator ' @@' $TEST_FILE -l $MODEL_FILE | sed 's/_/ /g' > $OUT_FILE
+morfessor-segment $TEST_FILE -l $MODEL_FILE | sed 's/_/ /g' | sed 's/ / @@/g' > $OUT_FILE
 echo "Morphs have been written to: ${OUT_FILE}"
 
 # Generate a guess file which basically inputs the first column of the original data
