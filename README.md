@@ -30,7 +30,7 @@ supervised/lstm/
 supervised/lstm/deepspin-2
 supervised/lstm/mine
 supervised/transformer
-supervised/transformer/deepspin-2
+supervised/transformer/deepspin-3
 ```
 
 1. The `baseline` directory has 2 scripts for generating baseline segmentations. One uses a pretrained BertTokenizer (`baseline/bert`) and the other uses Morfessor 2.0 (`baseline/morfessor`), an unsupervised utility that is not pretrained.
