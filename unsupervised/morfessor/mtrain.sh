@@ -56,8 +56,5 @@ echo "Morphs have been written to: ${OUT_FILE}"
 # Generate a guess file which basically inputs the first column of the original data
 cut -f 1 $TEST_FILE | paste - $OUT_FILE > $GUESS_FILE
 
-echo "TODO: Fix command above this line"
-exit 1
-
 echo "Evaluating..."
 python $EVAL_SCRIPT --gold $GOLD_FILE --guess $GUESS_FILE > $RESULTS_FILE
