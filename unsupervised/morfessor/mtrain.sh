@@ -8,6 +8,8 @@ if [ -z "${LAN}" ]; then
     exit 1
 fi
 
+
+
 # Lowercase the language name
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
 readonly REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -22,8 +24,9 @@ readonly TEST_FILE="${OUT_DIR}/test.tmp"
 readonly GOLD_FILE="${IN_DIR}/${LAN}.word.test.gold.tsv"
 readonly EVAL_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
 
+# Mongolian training set is in a sub-folder because it was a "surprise" language
 # Check if valid language
-if [ ! -f "${IN_DIR}/${LAN}.word.train.tsv" ]; then
+if [ "${LAN}" != "mon" ] && [ ! -f $TRAIN_IN ]; then
     echo "${LAN} is not a valid language option.  Options {ces|eng|fra|hun|ita|lat|mon|rus|spa}."
     exit 1
 fi
@@ -33,7 +36,13 @@ fi
 
 preprocess() {
     for dataset in train dev test; do
-        IN_FILE="${IN_DIR}/${LAN}.word.${dataset}.tsv"
+        # Mongolian training set is in a sub-folder because it was a "surprise" language
+        if [ "${LAN}" == "mon" ] && [ "${dataset}" != "test" ]; then
+            IN_FILE="${IN_DIR}/surprise/${LAN}.word.${dataset}.tsv"
+        else
+            IN_FILE="${IN_DIR}/${LAN}.word.${dataset}.tsv"
+        fi
+        echo "IN_FILE: ${IN_FILE}"
         TMP_FILE="${OUT_DIR}/${dataset}.tmp"
 
         # Grab the first column of data (just the word) and replace spaces with underscores
