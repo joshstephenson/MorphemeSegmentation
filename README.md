@@ -3,7 +3,7 @@ Morpheme segmentation is the process of separating words into their fundamental 
 
 - **foundationalism** &rarr; **found**+**ation**+**al**+**ism**
 
-This project is an attempt at reproduction of [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model for morpheme segmentation which was the 2nd place winner in the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/), designed by the same team that won 1st place. To be clear: this is not DeepSPIN-2, but an attempt at recreating it based on the information shared in the paper.
+This project is an attempt at reproduction of [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model for morpheme segmentation which was the 2nd place winner in the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model for morpheme segmentation which was the 1st place winner.
 
 ### The Data
 Here is a sample of the training data for Hungarian:
