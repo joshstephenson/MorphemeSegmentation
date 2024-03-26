@@ -34,7 +34,7 @@ supervised/transformer/deepspin-3
 ```
 
 1. The `baseline` directory has 2 scripts for generating baseline segmentations. One uses a pretrained BertTokenizer (`baseline/bert`) and the other uses Morfessor 2.0 (`baseline/morfessor`), an unsupervised utility that is not pretrained.
-2. The `supervised` directory has two subdirectories: one for an `LSTM` implementation and one for a `Transformer` based implementation. Within `supervised/lstm/deepspin-2` you can find a reproduction of DeepSpin-2, written with fairseq by Ben Peters, as well as a more or less from scratch implementation written by me, with the hopes of recreating the results of DeepSpin-2 without fairseq. Within `supervised/transformer/deepspin-3' is another fairseq implementation written by Ben Peters that uses (you guessed it) a Transformer architecture.
+2. The `supervised` directory has two subdirectories: one for an `LSTM` implementation and one for a `Transformer` based implementation. Within `supervised/lstm/deepspin-2` you can find a reproduction of DeepSpin-2, written with fairseq by Ben Peters, as well as a more or less from scratch implementation written by me, with the hopes of recreating the results of DeepSpin-2 without fairseq. Within `supervised/transformer/deepspin-3` is another fairseq implementation written by Ben Peters that uses (you guessed it) a Transformer architecture.
 
 ### Configuration
 All configuration variables including the target language and hyperparameters are set in `config/config.yaml`. This project only trains one language at a time, based on the 'language' variable in config.yaml.
