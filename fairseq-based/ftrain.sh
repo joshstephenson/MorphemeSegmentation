@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Adapted from a script by Ben Peterns which was adapted by a script by Kyle Gorman and Shijie Wu.
+# Adapted from a script by Ben Peters which was adapted by a script by Kyle Gorman and Shijie Wu.
 #
 LAN=$1 # Should match the name of the languages available in ../2022SegmentationST/data
 if [ -z "${LAN}" ]; then

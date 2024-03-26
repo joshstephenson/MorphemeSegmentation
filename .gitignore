@@ -253,3 +253,4 @@ src/.DS_Store
 .DS_Store
 fairseq-based/data/hun/out
 fairseq-based/data/hun/models
+baseline/morfessor/data
