@@ -62,7 +62,6 @@ preprocess() {
     done
 
     echo "Moving on to fairseq-preprocess"
-    BASE=$(basename $DATASET)
     cd "${IN_DIR}" && \
     fairseq-preprocess \
         --source-lang="src" \

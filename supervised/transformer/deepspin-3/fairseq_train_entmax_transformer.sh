@@ -28,6 +28,7 @@ readonly ACTIVATION_FN=relu
 MODEL_DIR="${GRID_LOC}/${NAME}-entmax-minloss-${EMB}-${HID}-${LAYERS}-${HEADS}-${BATCH}-${ENTMAX_ALPHA}-${LR}-${WARMUP}-${DROPOUT}"
 
 train() {
+    echo "DATA_BIN: ${DATA_BIN}"
     local -r CP="$1"; shift
     local -r ENCODER_LAYERS="$1"; shift
     local -r DECODER_LAYERS="$1"; shift
@@ -65,7 +66,7 @@ train() {
         --save-interval="${SAVE_INTERVAL}" \
         --patience="${PATIENCE}" \
         --no-epoch-checkpoints \
-        --amp \
+        #--amp \
         #--best-checkpoint-metric "lev_dist" \
         #--eval-levenshtein \
         #--eval-bleu-remove-bpe "sentencepiece" \
