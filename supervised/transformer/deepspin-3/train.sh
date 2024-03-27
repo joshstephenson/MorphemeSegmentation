@@ -39,7 +39,7 @@ echo "VOCAB: ${VOCAB}"
 bin() {
     tail -n +4 "${OUT_DIR}/src.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${OUT_DIR}/src.fairseq.vocab"
     tail -n +4 "${OUT_DIR}/tgt.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${OUT_DIR}/tgt.fairseq.vocab"
-    cd "${IN_DIR}"
+    #cd "${PREPROCESSED_DIR}"
     fairseq-preprocess \
         --source-lang="src" \
         --target-lang="tgt" \
@@ -79,7 +79,7 @@ preprocess() {
 
 train() {
     # $THIS_MODEL_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
-    local -r MODEL_DIR=$1; shift
+    local -r THIS_MODEL_DIR=$1; shift
     local -r EMB=$1; shift
     local -r HID=$1; shift
     local -r LAYERS=$1; shift
@@ -89,7 +89,7 @@ train() {
     local -r BATCH=$1; shift
     fairseq-train \
         "${INPUT_PATH}" \
-        --save-dir="${MODEL_DIR}" \
+        --save-dir="${THIS_MODEL_DIR}" \
         --source-lang="src" \
         --target-lang="tgt" \
         --seed="${SEED}" \
@@ -141,12 +141,11 @@ grid() {
         for DROPOUT in 0.1 0.3 ; do
             for BATCH in $BATCHES ; do
                 THIS_MODEL_DIR="${GRID_LOC}/${LAN}-entmax-minloss-${EMB}-${HID}-${LAYERS}-${HEADS}-${BATCH}-${ENTMAX_ALPHA}-${LR}-${WARMUP}-${DROPOUT}"
+                mkdir -p "${THIS_MODEL_DIR}"
                 FILENAME="${THIS_MODEL_DIR}/dev-5.results"
                 if [ ! -f "$FILENAME" ]
                 then
                     train $THIS_MODEL_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
-                    echo "Training worked. Remove exit statement here"
-                    exit 1
                     generate $THIS_MODEL_DIR test
                     evaluate $THIS_MODEL_DIR test
                     echo "Trained data written to: ${FILENAME}"
@@ -169,16 +168,16 @@ train_grid() {
 ###################
 
 generate() {
-    local -r MODEL_DIR="$1"; shift
+    local -r THIS_MODEL_DIR="$1"; shift
     local -r MODE="$1"; shift
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     local -r FAIRSEQ_MODE="${MODE/dev/valid}"
-    CHECKPOINT="${MODEL_DIR}/checkpoint_best.pt"
-    OUT="${MODEL_DIR}/${MODE}-${BEAM}.subwords.out"
-    PRED="${MODEL_DIR}/${MODE}-${BEAM}.subwords.pred"
+    CHECKPOINT="${THIS_MODEL_DIR}/checkpoint_best.pt"
+    OUT="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.out"
+    PRED="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.pred"
     # Makes raw predictions.
     fairseq-generate \
-        "${MODEL_DIR}" \
+        "${OUT_DIR}" \
         --source-lang="src" \
         --target-lang="tgt" \
         --path="${CHECKPOINT}" \
@@ -193,14 +192,14 @@ generate() {
     fi
     # Extracts the predictions into a TSV file.
     cat "${OUT}" | grep -P '^H-'  | cut -c 3- | sort -n -k 1 | awk -F "\t" '{print $NF}' > $PRED
-    cut -f 1 $GOLD_PATH | paste - $PRED > "${MODEL_DIR}/${MODE}-${BEAM}.guess"
+    cut -f 1 $GOLD_PATH | paste - $PRED > "${THIS_MODEL_DIR}/${MODE}-${BEAM}.guess"
 }
 
 evaluate() {
-    local -r MODEL_DIR="$1"; shift
+    local -r THIS_MODEL_DIR="$1"; shift
     local -r MODE="$1"; shift
     # Applies the evaluation script to the TSV file.
-    PREFIX="${MODEL_DIR}/${MODE}-${BEAM}"
+    PREFIX="${THIS_MODEL_DIR}/${MODE}-${BEAM}"
     RESULTS_FILE="${PREFIX}.guess"
     RESULTS_FILE="${PREFIX}.results"
     python 2022SegmentationST/evaluation/evaluate.py --gold "${GOLD_PATH}" --guess "${GUESS_FILE}" > "${RESULTS_FILE}"
