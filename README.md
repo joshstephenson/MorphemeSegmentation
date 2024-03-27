@@ -1,9 +1,28 @@
-# Morpheme Segmentation with LSTM RNN
+# Morpheme Segmentation with LSTM and Transformers
 Morpheme segmentation is the process of separating words into their fundamental units of meaning. For example:
 
 - **foundationalism** &rarr; **found**+**ation**+**al**+**ism**
 
-This project is an attempt at reproduction of [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model for morpheme segmentation which was the 2nd place winner in the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/), designed by the same team that won 1st place. To be clear: this is not DeepSPIN-2, but an attempt at recreating it based on the information shared in the paper.
+This project is an attempt at reproducing the 2nd and 1st place systems from the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) in word segmentation. These systems, from Ben Peters and Andre Martins are [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model.
+
+### Organization
+This repository is organized as such:
+```
+baseline/
+baseline/bert
+baseline/morfessor
+supervised/
+supervised/lstm/
+supervised/lstm/deepspin-2
+supervised/lstm/mine
+supervised/transformer
+supervised/transformer/deepspin-3
+```
+
+1. The `baseline` directory has 2 scripts for generating baseline segmentations. One uses a pretrained BertTokenizer (`baseline/bert`) and the other uses Morfessor 2.0 (`baseline/morfessor`), an unsupervised utility that is not pretrained.
+2. The `supervised` directory has two subdirectories: one for an `LSTM` implementation and one for a `Transformer` based implementation. Within `supervised/lstm/deepspin-2` you can find a reproduction of DeepSpin-2, as well as a more or less from scratch implementation written by me, as an academic exercise. Within `supervised/transformer/deepspin-3` is another fairseq implementation that uses a transformer model.
+
+In the case of DeepSPIN-2 and DeepSPIN-3, the original implementations were written by (Ben Peters)[https://github.com/bpopeters], but the scripts in this repository streamline their usage.
 
 ### The Data
 Here is a sample of the training data for Hungarian:
@@ -18,11 +37,6 @@ After training, the model is expected to be able to receive just the first colum
 ### Setup
 - Make sure to clone this with `--recuse-submodules` to ensure you get the data from the competition.
 - After creating a virtual environment with `python -m venv <name>`, you can install necessary python libraries with `pip install -r requirements.txt` from the root directory of this repository.
-
-### Organization
-This repository is organized into 2 sections:
-1. The `baseline` directory has 2 scripts for generating baseline segmentations. One uses a pretrained `BertTokenizer` ('baseline/bert') and the other uses `Morfessor 2.0`, an unsupervised utility that is not pretrained.
-2. The `supervised` directory has two subdirectories: one for an `LSTM` implementation and one for a `Transformer` based implementation. Within `supervised/lstm/deepspin-2` you can find a reproduction of DeepSpin-2, written with fairseq by Ben Peters, as well as a more or less from scratch implementation written by me, with the hopes of recreating the results of DeepSpin-2 without fairseq. Within `supervised/transformer/deepspin-3' is another fairseq implementation written by Ben Peters that uses (you guessed it) a Transformer architecture.
 
 ### Configuration
 All configuration variables including the target language and hyperparameters are set in `config/config.yaml`. This project only trains one language at a time, based on the 'language' variable in config.yaml.
@@ -40,23 +54,7 @@ Language options include:
 |Spanish|spa|
 
 ### Training
-- Use `python train.py` to train the model. It will use the corresponding language training data found in `2022SegmentationST/data`. The trained model will be placed in the `output/` directory and the filename will contain all the hyperparameters found in config.yaml. For example:
-```
-hun-embeddings_256-hidden_1024-n_layers_2-dropout_0.2-tfr_0.5-lr_0.001-clip_1.0-by_char.pt
-```
-
-### Evaluation
-- Use `python generate.py` in the `src` directory of this repository to write the predictions to a TRV file in the `output/` directory. You can also use `python predict.py` to print predictions to STDOUT for debugging.
-- The generate script will also call the evaluation script from `2022SegmentationST` and the output will look something like this:
-
-Output:
-```
-category: all
-distance	2.50
-f_measure	54.13
-precision	53.94
-recall	54.32
-```
+Please refer to README's within each subdirectory for training and evaluation of each individual project.
 
 
 
