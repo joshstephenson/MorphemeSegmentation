@@ -1,10 +1,21 @@
 ## Training and Evaluation
 To train, segment and evaluate use:
 ```
-./train.sh
+./train.sh <language code>
 ```
 
-Language options are {ces|eng|fra|hun|ita|lat|mon|rus|spa}.
+Language options include:
+| Language | Language code |
+|----------|---------------|
+|English|eng|
+|French|fra|
+|Hungarian|hun|
+|Italian|ita|
+|Latin|lat|
+|Mongolian|mon|
+|Russian|rus|
+|Spanish|spa|
+
 
 output:
 ```
