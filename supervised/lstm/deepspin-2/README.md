@@ -1,9 +1,20 @@
 ### Training and Evaluating
 To train, segment and evaluate this model use:
 ```
-./ftrain.sh hun
+./ftrain.sh <language code>
+
 ```
-Language options are {ces|eng|fra|hun|ita|lat|mon|rus|spa}.
+Language options include:
+| Language | Language code |
+|----------|---------------|
+|English|eng|
+|French|fra|
+|Hungarian|hun|
+|Italian|ita|
+|Latin|lat|
+|Mongolian|mon|
+|Russian|rus|
+|Spanish|spa|
 
 
 output:
