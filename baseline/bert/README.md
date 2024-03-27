@@ -1,7 +1,7 @@
 ## Generating segmentations with BertTokenizer
 This will use 2 different pretrained models depending on the input language. To run generate the segments and run the evaluation script:
 ```
-./btrain.sh <language code>
+./run.sh <language code>
 ```
 
 Language options include:
