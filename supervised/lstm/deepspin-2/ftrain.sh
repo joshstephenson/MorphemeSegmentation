@@ -10,6 +10,9 @@ if [ -z "${LAN}" ]; then
 fi
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
 readonly REPO_ROOT=$(git rev-parse --show-toplevel)
+if [ -z "${REPO_ROOT}" ]; then
+    REPO_ROOT="~/MorphemeSegmentation"
+fi
 readonly DATASET="${REPO_ROOT}/2022SegmentationST/data/${LAN}.word"
 readonly IN_DIR="data/${LAN}/in"
 readonly OUT_DIR="data/${LAN}/out"
@@ -124,7 +127,8 @@ decode() {
         --gen-subset="${FAIRSEQ_MODE}" \
         --beam="${BEAM}" \
         #--alpha="${ENTMAX_ALPHA}" \
-        --batch-size 256 \
+        #--batch-size 256 \
+        --max-sentences=256 \
         > "${OUT}"
     # Extracts the predictions into a TSV file.
     if [ ! -f "${OUT}" ]; then

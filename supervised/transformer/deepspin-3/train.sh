@@ -13,6 +13,9 @@ readonly PREPROCESSED_DIR="data/${LAN}/in"
 readonly MODEL_DIR="data/${LAN}/models"
 readonly OUT_DIR="data/${LAN}/out"
 readonly REPO_ROOT=$(git rev-parse --show-toplevel)
+if [ -z "${REPO_ROOT}" ]; then
+    REPO_ROOT="~/MorphemeSegmentation"
+fi
 readonly IN_DIR="${REPO_ROOT}/2022SegmentationST/data"
 readonly INPUT_PATH="${IN_DIR}/${LAN}.word"
 readonly GOLD_PATH="2022SegmentationST/data/${LAN}.word.test.gold.tsv"
