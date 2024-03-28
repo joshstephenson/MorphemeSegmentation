@@ -88,7 +88,7 @@ train() {
     local -r DROPOUT=$1; shift
     local -r BATCH=$1; shift
     fairseq-train \
-        "${INPUT_PATH}" \
+        "${OUT_DIR}" \
         --save-dir="${THIS_MODEL_DIR}" \
         --source-lang="src" \
         --target-lang="tgt" \
@@ -99,12 +99,12 @@ train() {
         --activation-fn="${ACTIVATION_FN}" \
         --encoder-embed-dim="${EMB}" \
         --encoder-ffn-embed-dim="${HID}" \
-        --encoder-layers="${ENCODER_LAYERS}" \
+        --encoder-layers="${LAYERS}" \
         --encoder-attention-heads="${HEADS}" \
         --encoder-normalize-before \
         --decoder-embed-dim="${EMB}" \
         --decoder-ffn-embed-dim="${HID}" \
-        --decoder-layers="${DECODER_LAYERS}" \
+        --decoder-layers="${LAYERS}" \
         --decoder-attention-heads="${HEADS}" \
         --decoder-normalize-before \
         --share-decoder-input-output-embed \
@@ -184,7 +184,7 @@ generate() {
         --gen-subset="${FAIRSEQ_MODE}" \
         --beam="${BEAM}" \
         --alpha="${ENTMAX_ALPHA}" \
-	--batch-size 256 \
+        --batch-size 256 \
         > "${OUT}"
     if [ $? -ne 0 ]; then
         echo "fairseq-train failed."
