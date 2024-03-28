@@ -9,20 +9,17 @@ This project is an attempt at reproducing the 2nd and 1st place systems from the
 This repository is organized as such:
 ```
 baseline/
-baseline/bert
-baseline/morfessor
-supervised/
-supervised/lstm/
-supervised/lstm/deepspin-2
-supervised/lstm/mine
-supervised/transformer
-supervised/transformer/deepspin-3
+baseline/bert       # simple BertTokenizer generator and evaluator
+baseline/morfessor  # simple Morfessor 2.0 trainer, generator, and evaluator
+deepspin-2          # streamlined implementation of DeepSpin-2, written by (Ben Peters)[https://github.com/bpopeters], using fairseq and an LSTM architecture
+deepspin-3          # streamlined implementation of DeepSpin-3, written by (Ben Peters)[https://github.com/bpopeters], using fairseq and a transformer architecture
+lstm                # an LSTM architecture not built on fairseq (for academic purposes)
 ```
 
 1. The `baseline` directory has 2 scripts for generating baseline segmentations. One uses a pretrained BertTokenizer (`baseline/bert`) and the other uses Morfessor 2.0 (`baseline/morfessor`), an unsupervised utility that is not pretrained.
-2. The `supervised` directory has two subdirectories: one for an `LSTM` implementation and one for a `Transformer` based implementation. Within `supervised/lstm/deepspin-2` you can find a reproduction of DeepSpin-2, as well as a more or less from scratch implementation written by me, as an academic exercise. Within `supervised/transformer/deepspin-3` is another fairseq implementation that uses a transformer model.
+2. The `supervised` directory has two subdirectories: one for an `LSTM` implementation and one for a `Transformer` based implementation. Within `supervised/lstm/deepspin-2` you can find a reproduction of DeepSpin-2, as well as a more or less from scratch implementation written by me, as an academic exercise. Within `deepspin-3` is another fairseq implementation that uses a transformer model.
 
-In the case of DeepSPIN-2 and DeepSPIN-3, the original implementations were written by (Ben Peters)[https://github.com/bpopeters], but the scripts in this repository streamline their usage.
+In the case of DeepSPIN-2 and DeepSPIN-3, the original implementations were written by (Ben Peters)[https://github.com/bpopeters], but the scripts in this repository streamline their usage within a single shell script.
 
 ### The Data
 Here is a sample of the training data for Hungarian:
