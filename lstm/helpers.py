@@ -14,7 +14,7 @@ def postprocess(prediction):
 def project_file(config, extension, suffix = None):
     lang = config['language']
     suffix = suffix if suffix is not None else ''
-    config_description = ('-embeddings_' + str(config['encoder_decoder']['embedding_dim']) +
+    config_description = ('embeddings_' + str(config['encoder_decoder']['embedding_dim']) +
                 '-hidden_' + str(config['encoder_decoder']['hidden_dim']) +
                 '-n_layers_' + str(config['encoder_decoder']['n_layers']) +
                 '-dropout_' + str(config['encoder_decoder']['dropout']) +
