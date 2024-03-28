@@ -12,7 +12,7 @@ readonly LAN="$1"; shift
 readonly PREPROCESSED_DIR="data/${LAN}/in"
 readonly MODEL_DIR="data/${LAN}/models"
 readonly OUT_DIR="data/${LAN}/out"
-readonly REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel)
 if [ -z "${REPO_ROOT}" ]; then
     REPO_ROOT="~/MorphemeSegmentation"
 fi

@@ -9,7 +9,7 @@ if [ -z "${LAN}" ]; then
     exit 1
 fi
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
-readonly REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel)
 if [ -z "${REPO_ROOT}" ]; then
     REPO_ROOT="~/MorphemeSegmentation"
 fi
