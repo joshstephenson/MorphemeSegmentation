@@ -13,8 +13,9 @@ readonly PREPROCESSED_DIR="data/${LAN}/in"
 readonly MODEL_DIR="data/${LAN}/models"
 readonly OUT_DIR="data/${LAN}/out"
 REPO_ROOT=$(git rev-parse --show-toplevel)
+# Remote server doesn't have git command
 if [ -z "${REPO_ROOT}" ]; then
-    REPO_ROOT="~/MorphemeSegmentation"
+    REPO_ROOT="$(pwd | cut -d / -f 1,2,3)/MorphemeSegmentation"
 fi
 readonly IN_DIR="${REPO_ROOT}/2022SegmentationST/data"
 readonly INPUT_PATH="${IN_DIR}/${LAN}.word"

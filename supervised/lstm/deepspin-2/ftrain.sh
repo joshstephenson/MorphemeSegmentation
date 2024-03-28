@@ -10,8 +10,9 @@ if [ -z "${LAN}" ]; then
 fi
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
 REPO_ROOT=$(git rev-parse --show-toplevel)
+# Remote server doesn't have git command
 if [ -z "${REPO_ROOT}" ]; then
-    REPO_ROOT="~/MorphemeSegmentation"
+    REPO_ROOT="$(pwd | cut -d / -f 1,2,3)/MorphemeSegmentation"
 fi
 readonly DATASET="${REPO_ROOT}/2022SegmentationST/data/${LAN}.word"
 readonly IN_DIR="data/${LAN}/in"
