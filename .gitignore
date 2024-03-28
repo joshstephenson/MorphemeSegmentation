@@ -165,8 +165,6 @@ fairseq-based/data/hun/models
 baseline/morfessor/data
 data-bin/
 data/
-supervised/lstm/mine/data
-supervised/lstm/deepspin-2/data
-supervised/transformer/deepspin-3/data
-unsupervised/morfessor/data
-
+lstm/data
+deepspin-2/data
+deepspin-3/data
