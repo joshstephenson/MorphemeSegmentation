@@ -130,6 +130,7 @@ train() {
 
 decode() {
     MODE="test"
+    get_checkpoint
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     FAIRSEQ_MODE="${MODE/dev/valid}"
     OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
