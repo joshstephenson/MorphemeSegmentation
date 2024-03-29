@@ -78,12 +78,12 @@ class PlateauWithEarlyStopping:
 
 
 class Trainer():
-    def __init__(self):
+    def __init__(self, dropout):
         self.config = Config()
         self.logger = get_logger()
         self.data = MorphemeDataLoader(config)
         self.device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
-        self.model = Seq2Seq(self.data.train.word_len, self.data.train.morph_len, self.device).to(self.device)
+        self.model = Seq2Seq(self.data.train.word_len, self.data.train.morph_len, self.device, dropout).to(self.device)
         self.logger.info(self.model)
 
         # optimizer, scheduler = config.optimizer(model)
@@ -106,7 +106,7 @@ class Trainer():
             logger.info(f"\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
             logger.info(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
 
-            # self.model.load_from_file(config.model_file)
+            # self.model.load_from_file(self.model.model_file)
 
             test_loss = self._validate(use_test = True)
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
@@ -114,7 +114,7 @@ class Trainer():
             # Nothing will occur here if early_stopping is False in config.yaml
             early_stopping(valid_loss, self.model)
             if early_stopping.early_stop:
-                self.model.load_from_file(config.model_file) # reload the lowest valid loss checkpoint
+                self.model.load_from_file(self.model.model_file) # reload the lowest valid loss checkpoint
                 logger.info(f"Stopping early after {i} epochs.")
                 break
 
@@ -172,8 +172,10 @@ class Trainer():
         return epoch_loss / len(dataset.loader)
 
 def main():
-    trainer = Trainer()
-    trainer.run()
+    for d in range(1,6):
+        print(f'Dropout: {d/10}')
+        trainer = Trainer(dropout = d/10)
+        trainer.run()
 
 
 if __name__ == '__main__':

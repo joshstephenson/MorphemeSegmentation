@@ -70,7 +70,7 @@ def main():
     data = MorphemeDataLoader(config)
     device = config.device()
     model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
-    model.load_from_file(config.model_file)
+    model.load_from_file(model.model_file)
     logger.info(model)
 
     # CHECK WORDS WE HAVE TRAINED

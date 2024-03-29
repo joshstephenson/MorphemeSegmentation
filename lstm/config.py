@@ -27,10 +27,9 @@ class Config():
         torch.manual_seed(config['seed'])
         random.seed(config['seed'])
 
-        # Where we store the generated model
-        self.model_file = project_file(self.config, self.config['model_ext'], self.config['model_suffix'])
 
-        assert self.model_file is not None
+    def model_file(self, dropout):
+        return project_file(self.config, self.config['model_ext'], dropout, self.config['model_suffix'])
 
     def device(self):
         """

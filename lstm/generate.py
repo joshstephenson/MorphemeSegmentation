@@ -1,12 +1,12 @@
 import logging
 
-from predict import segment_word, segment_word2
-from helpers import postprocess
+from predict import segment_word
 from morpheme_data import MorphemeDataLoader
 from models import *
 from helpers import *
 from tqdm import tqdm
 import subprocess
+import argparse
 
 config = Config()
 logger = get_logger()
@@ -15,12 +15,12 @@ logger.setLevel(logging.WARN)
 SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
-def main():
+def main(file):
     config = Config()
     data = MorphemeDataLoader(config)
     device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
     model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
-    model.load_from_file(config.model_file)
+    model.load_from_file(file)
     logger.info(model)
 
     dataset = data.test
@@ -59,4 +59,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Generator')
+    parser.add_argument("file", type=str, help = 'path to model file')
+    opt = parser.parse_args()
+    main(opt.file)

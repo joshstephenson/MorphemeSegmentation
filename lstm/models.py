@@ -17,15 +17,15 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 class Encoder(nn.Module):
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, dropout):
         super().__init__()
         self.hidden_dim = config['encoder_decoder']['hidden_dim']
         self.n_layers = config['encoder_decoder']['n_layers']
-        self.dropout = nn.Dropout(config['encoder_decoder']['dropout'])
         self.embedding = nn.Embedding(input_dim, config['encoder_decoder']['embedding_dim'])
         self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'],
                            config['encoder_decoder']['n_layers'],
                            bidirectional=config['encoder_decoder']['bidirectional'])
+        self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, src):
         # src = [src length, batch size]
@@ -39,17 +39,17 @@ class Encoder(nn.Module):
         return hidden, cell
 
 class Decoder(nn.Module):
-    def __init__(self, output_dim):
+    def __init__(self, output_dim, dropout):
         super().__init__()
         self.output_dim = output_dim
         self.hidden_dim = config['encoder_decoder']['hidden_dim']
         self.n_layers = config['encoder_decoder']['n_layers']
-        self.dropout = nn.Dropout(config['encoder_decoder']['dropout'])
         self.embedding = nn.Embedding(output_dim, config['encoder_decoder']['embedding_dim'])
         bidirectional = config['encoder_decoder']['bidirectional']
         self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'],
                            config['encoder_decoder']['n_layers'],
                            bidirectional=bidirectional)
+        self.dropout = nn.Dropout(p = dropout)
         self.fc_out = nn.Linear(config['encoder_decoder']['hidden_dim'] * (2 if bidirectional else 1), output_dim)
 
     def forward(self, input, hidden, cell):
@@ -76,11 +76,12 @@ class Decoder(nn.Module):
         return prediction, hidden, cell
 
 class Seq2Seq(nn.Module):
-    def __init__(self, input_dim, output_dim, device):
+    def __init__(self, input_dim, output_dim, device, dropout = 0.2):
         super().__init__()
-        self.encoder = Encoder(input_dim)
-        self.decoder = Decoder(output_dim)
+        self.encoder = Encoder(input_dim, dropout)
+        self.decoder = Decoder(output_dim, dropout)
         self.device = device
+        self.model_file = config.model_file(dropout)
         assert (
                 self.encoder.hidden_dim == self.decoder.hidden_dim
         ), "Hidden dimensions of encoder and decoder must be equal!"
@@ -125,8 +126,8 @@ class Seq2Seq(nn.Module):
         return outputs
 
     def save(self):
-        torch.save(self.state_dict(), config.model_file)
-        logger.info(f'saved model to: {config.model_file}')
+        torch.save(self.state_dict(), self.model_file)
+        logger.info(f'saved model to: {self.model_file}')
 
     def load_from_file(self, file):
         if not os.path.exists(file):
