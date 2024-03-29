@@ -133,11 +133,11 @@ decode() {
     get_checkpoint
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     FAIRSEQ_MODE="${MODE/dev/valid}"
-    OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
+    OUT_FILE="${OUT_DIR}/${MODE}-${BEAM}.out"
     # Bash won't overwrite the file
     # It's fine to regenerate
-    if [ -f "${OUT}" ]; then
-        log "${OUT} found. Proceeding..."
+    if [ -f "${OUT_FILE}" ]; then
+        log "${OUT_FILE} found. Proceeding..."
     else
         log "Decoding..."
         fairseq-generate \
@@ -147,9 +147,14 @@ decode() {
             --path="${CHECKPOINT}" \
             --gen-subset="${FAIRSEQ_MODE}" \
             --beam="${BEAM}" \
-            > "${OUT}"
+            > "${OUT_FILE}"
             #--alpha="${ENTMAX_ALPHA}" \
             #--batch-size 256 \
+    fi
+    if [ $? -ne 0 ]; then
+        rm "${OUT_FILE}"
+        echo "It appears decoding failed. Check output."
+        exit 1
     fi
 }
 postprocess() {
@@ -157,14 +162,14 @@ postprocess() {
     MODE="test"
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     FAIRSEQ_MODE="${MODE/dev/valid}"
-    OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
+    OUT_FILE="${OUT_DIR}/${MODE}-${BEAM}.out"
     PRED="${OUT_DIR}/${MODE}-${BEAM}.pred"
-    GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
+    GUESS_FILE="${OUT_DIR}/${MODE}-${BEAM}.guess"
 
     # Extracts the predictions into a TSV file.
     # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
     echo "Writing PRED file"
-    cat "${OUT}" | grep -P '^H-' | \
+    cat "${OUT_FILE}" | grep -P '^H-' | \
         cut -c 3- | \
         # sort them numerically
         sort -n -k 1 | \
@@ -180,17 +185,17 @@ postprocess() {
     echo "Generated prediction file: ${PRED}"
     # Now take the first column of the gold file (the input word) as the first column
     # and the generated prediction as the second column and output to .guess file
-    cut -f 1 "${GOLD_FILE}" | paste - "${PRED}" > "${GUESS}"
-    echo "Generated guess file: ${GUESS}"
+    cut -f 1 "${GOLD_FILE}" | paste - "${PRED}" > "${GUESS_FILE}"
+    echo "Generated guess file: ${GUESS_FILE}"
 }
 
 evaluate() {
     log "Evaluating..."
     MODE="test"
-    GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
+    GUESS_FILE="${OUT_DIR}/${MODE}-${BEAM}.guess"
     # Applies the evaluation script to the generated TSV file.
     RESULTS_FILE="${RESULTS_DIR}/${MODE}-${BEAM}.results"
-    python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS}" > "${RESULTS_FILE}"
+    python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS_FILE}" > "${RESULTS_FILE}"
     if [ $? -eq 0 ]; then
         cat "${RESULTS_FILE}"
     else
