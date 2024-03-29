@@ -9,9 +9,11 @@ if [ -z "${LAN}" ]; then
     exit 1
 fi
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
-REPO_ROOT=$(git rev-parse --show-toplevel)
-# Remote server doesn't have git command
-if [ -z "${REPO_ROOT}" ]; then
+HAS_GIT=$(which git)
+if [ $? -eq 0]; then
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+else # Remote server doesn't have git command in task runner environment
+    # This assumes that MorphemeSegmentation is at third depth from root: /home/user/MorphemeSegmentation
     REPO_ROOT="$(pwd | cut -d / -f 1,2,3)/MorphemeSegmentation"
 fi
 readonly DATASET="${REPO_ROOT}/2022SegmentationST/data/${LAN}.word"
@@ -22,6 +24,7 @@ readonly MODEL_DIR="data/${LAN}/models"
 readonly EVALUATE_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
 readonly DICT_FILE="${OUT_DIR}/dict.src.txt"
 readonly CHECKPOINT_BEST="${MODEL_DIR}/checkpoint_best.pt"
+readonly CHECKPOINT_LAST="${MODEL_DIR}/checkpoint_last.pt"
 
 # Check if valid language
 if [ ! -f "${DATASET}.train.tsv" ]; then
@@ -79,44 +82,50 @@ preprocess() {
         --thresholdtgt=1 \
         --destdir="../../${LAN}/out"
 }
+
+get_checkpoint() {
+    if [ -f "${CHECKPOINT_BEST}" ]; then
+        CHECKPOINT="${CHECKPOINT_BEST}"
+    elif [ -f "${CHECKPOINT_LAST}" ]; then
+        CHECKPOINT="${CHECKPOINT_LAST}"
+    else
+        CHECKPOINT=""
+    fi
+}
 train() {
     cd ../../..
-#    CHECKPOINT_LAST="${MODEL_DIR}/checkpoint_last.pt"
-#    if [ -f "${CHECKPOINT_LAST}" ]; then
-#        echo "Found trained model: ${CHECKPOINT_LAST}"
-#        return 0
-#    fi
-    if [ -f "${CHECKPOINT_BEST}" ]; then
-        echo "Found trained model: ${CHECKPOINT_BEST}"
-        echo "Not retraining"
-        return 0
+    get_checkpoint
+    echo "CHECKPOINT: ${CHECKPOINT}"
+    if [ -f "${CHECKPOINT}" ]; then
+        log "Checkpount found: ${CHECKPOINT}\nNot retraining..."
+    else
+        log "Training..."
+        fairseq-train \
+            "${OUT_DIR}/" \
+            --save-dir="${MODEL_DIR}" \
+            --source-lang="src" \
+            --target-lang="tgt" \
+            --disable-validation \
+            --seed="${SEED}" \
+            --arch=lstm \
+            --encoder-bidirectional \
+            --dropout="${DROPOUT}" \
+            --encoder-embed-dim="${EED}" \
+            --encoder-hidden-size="${EHS}" \
+            --decoder-embed-dim="${DED}" \
+            --decoder-out-embed-dim="${DED}" \
+            --decoder-hidden-size="${DHS}" \
+            --share-decoder-input-output-embed \
+            --criterion="${CRITERION}" \
+            --label-smoothing="${LABEL_SMOOTHING}" \
+            --optimizer="${OPTIMIZER}" \
+            --lr="${LR}" \
+            --clip-norm="${CLIP_NORM}" \
+            --batch-size="${BATCH}" \
+            --max-update="${MAX_UPDATE}" \
+            --save-interval="${SAVE_INTERVAL}" \
+            --reset-optimizer # to make sure we get a checkpoint_best file
     fi
-    log "Training..."
-    fairseq-train \
-        "${OUT_DIR}/" \
-        --save-dir="${MODEL_DIR}" \
-        --source-lang="src" \
-        --target-lang="tgt" \
-        --disable-validation \
-        --seed="${SEED}" \
-        --arch=lstm \
-        --encoder-bidirectional \
-        --dropout="${DROPOUT}" \
-        --encoder-embed-dim="${EED}" \
-        --encoder-hidden-size="${EHS}" \
-        --decoder-embed-dim="${DED}" \
-        --decoder-out-embed-dim="${DED}" \
-        --decoder-hidden-size="${DHS}" \
-        --share-decoder-input-output-embed \
-        --criterion="${CRITERION}" \
-        --label-smoothing="${LABEL_SMOOTHING}" \
-        --optimizer="${OPTIMIZER}" \
-        --lr="${LR}" \
-        --clip-norm="${CLIP_NORM}" \
-        --batch-size="${BATCH}" \
-        --max-update="${MAX_UPDATE}" \
-        --save-interval="${SAVE_INTERVAL}" \
-        --reset-optimizer # to make sure we get a checkpoint_best file
 }
 
 decode() {
