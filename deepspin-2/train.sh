@@ -95,7 +95,6 @@ get_checkpoint() {
 train() {
     cd ../../..
     get_checkpoint
-    echo "CHECKPOINT: ${CHECKPOINT}"
     if [ -f "${CHECKPOINT}" ]; then
         log "Checkpount found: ${CHECKPOINT}\nNot retraining..."
     else
@@ -130,9 +129,9 @@ train() {
 
 decode() {
     log "Decoding..."
-    local -r MODE="test"
+    MODE="test"
     # Fairseq insists on calling the dev-set "valid"; hack around this.
-    local -r FAIRSEQ_MODE="${MODE/dev/valid}"
+    FAIRSEQ_MODE="${MODE/dev/valid}"
     OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
     PRED="${OUT_DIR}/${MODE}-${BEAM}.pred"
     GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
@@ -151,15 +150,17 @@ decode() {
         > "${OUT}"
         #--alpha="${ENTMAX_ALPHA}" \
         #--batch-size 256 \
-    # Extracts the predictions into a TSV file.
-    if [ ! -f "${OUT}" ]; then
-        echo "The last command failed to generate ${OUT}. Please check output for error."
-        exit 1
-    fi
-    #################################
-    # Now do a little post-processing
-    #################################
+}
+postprocess() {
+    log "Postprocessing..."
+    MODE="test"
+    # Fairseq insists on calling the dev-set "valid"; hack around this.
+    FAIRSEQ_MODE="${MODE/dev/valid}"
+    OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
+    PRED="${OUT_DIR}/${MODE}-${BEAM}.pred"
+    GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
 
+    # Extracts the predictions into a TSV file.
     # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
     cat "${OUT}" | grep -P '^H-' | \
         cut -c 3- | \
@@ -195,13 +196,13 @@ evaluate() {
 
 preprocess
 if [ $? -ne 0 ]; then
-    echo "The previous command failed. Stopping here"
+    echo "Preprocessing failed. Stopping here"
     exit 1
 fi
 echo "Preprocessing succeeded"
 train
 if [ $? -ne 0 ]; then
-    echo "The previous command failed. Stopping here"
+    echo "Training failed. Stopping here"
     exit 1
 fi
 echo "Training succeeded"
@@ -211,4 +212,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 echo "Decoding succeeded"
+postprocess
+if [ $? -ne 0 ]; then
+    echo "Postprocessing failed. Stopping here"
+    exit 1
+fi
+echo "Postprocess succeeded"
 evaluate
+if [ $? -ne 0 ]; then
+    echo "Evaluation failed. Stopping here"
+    exit 1
+fi
