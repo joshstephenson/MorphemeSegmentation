@@ -185,11 +185,12 @@ postprocess() {
 
 evaluate() {
     log "Evaluating..."
-    local -r MODE="test"
+    MODE="test"
+    GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
     # Applies the evaluation script to the generated TSV file.
     RESULTS_FILE="${RESULTS_DIR}/${MODE}-${BEAM}.results"
-    python $EVALUATE_SCRIPT --gold $GOLD_FILE --guess "${OUT_DIR}/${MODE}-${BEAM}.guess" > "${RESULTS_FILE}"
-    if [ $? -ne 0 ]; then
+    python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS}" > "${RESULTS_FILE}"
+    if [ $? -eq 0 ]; then
         cat "${RESULTS_FILE}"
     else
         echo "Failed to evaluate model."
