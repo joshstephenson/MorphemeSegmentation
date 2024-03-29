@@ -97,7 +97,7 @@ train() {
     cd ../../..
     get_checkpoint
     if [ -f "${CHECKPOINT}" ]; then
-        log "Checkpount found: ${CHECKPOINT}\nNot retraining..."
+        log "Checkpount found: ${CHECKPOINT}\nProceeding..."
     else
         log "Training..."
         fairseq-train \
@@ -129,28 +129,27 @@ train() {
 }
 
 decode() {
-    log "Decoding..."
     MODE="test"
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     FAIRSEQ_MODE="${MODE/dev/valid}"
     OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
-    PRED="${OUT_DIR}/${MODE}-${BEAM}.pred"
-    GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
     # Bash won't overwrite the file
     # It's fine to regenerate
     if [ -f "${OUT}" ]; then
-        rm -f "${OUT}"
+        log "${OUT} found. Proceeding..."
+    else
+        log "Decoding..."
+        fairseq-generate \
+            "${OUT_DIR}" \
+            --source-lang="src" \
+            --target-lang="tgt" \
+            --path="${CHECKPOINT}" \
+            --gen-subset="${FAIRSEQ_MODE}" \
+            --beam="${BEAM}" \
+            > "${OUT}"
+            #--alpha="${ENTMAX_ALPHA}" \
+            #--batch-size 256 \
     fi
-    fairseq-generate \
-        "${OUT_DIR}" \
-        --source-lang="src" \
-        --target-lang="tgt" \
-        --path="${CHECKPOINT}" \
-        --gen-subset="${FAIRSEQ_MODE}" \
-        --beam="${BEAM}" \
-        > "${OUT}"
-        #--alpha="${ENTMAX_ALPHA}" \
-        #--batch-size 256 \
 }
 postprocess() {
     log "Postprocessing..."
