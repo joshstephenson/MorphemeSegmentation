@@ -175,9 +175,11 @@ postprocess() {
         # Strip leading whitespace from the tokenization above and redirect to prediction file
         sed -e 's/^ //g' > $PRED
 
+    echo "Generated prediction file: ${PRED}"
     # Now take the first column of the gold file (the input word) as the first column
     # and the generated prediction as the second column and output to .guess file
-    cut -f 1 $GOLD_PATH | paste - $PRED > $GUESS
+    cut -f 1 "${GOLD_PATH}" | paste - "${PRED}" > "${GUESS}"
+    echo "Generated guess file: ${GUESS}"
 }
 
 evaluate() {
