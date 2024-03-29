@@ -21,6 +21,7 @@ readonly RESULTS_DIR="data/${LAN}"
 readonly MODEL_DIR="data/${LAN}/models"
 readonly EVALUATE_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
 readonly DICT_FILE="${OUT_DIR}/dict.src.txt"
+readonly CHECKPOINT_BEST="${MODEL_DIR}/checkpoint_best.pt"
 
 # Check if valid language
 if [ ! -f "${DATASET}.train.tsv" ]; then
@@ -80,6 +81,16 @@ preprocess() {
 }
 train() {
     cd ../../..
+#    CHECKPOINT_LAST="${MODEL_DIR}/checkpoint_last.pt"
+#    if [ -f "${CHECKPOINT_LAST}" ]; then
+#        echo "Found trained model: ${CHECKPOINT_LAST}"
+#        return 0
+#    fi
+    if [ -f "${CHECKPOINT_BEST}" ]; then
+        echo "Found trained model: ${CHECKPOINT_BEST}"
+        echo "Not retraining"
+        return 0
+    fi
     log "Training..."
     fairseq-train \
         "${OUT_DIR}/" \
@@ -104,7 +115,8 @@ train() {
         --clip-norm="${CLIP_NORM}" \
         --batch-size="${BATCH}" \
         --max-update="${MAX_UPDATE}" \
-        --save-interval="${SAVE_INTERVAL}"
+        --save-interval="${SAVE_INTERVAL}" \
+        --reset-optimizer # to make sure we get a checkpoint_best file
 }
 
 decode() {
@@ -112,7 +124,6 @@ decode() {
     local -r MODE="test"
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     local -r FAIRSEQ_MODE="${MODE/dev/valid}"
-    CHECKPOINT="${MODEL_DIR}/checkpoint_last.pt"
     OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
     PRED="${OUT_DIR}/${MODE}-${BEAM}.pred"
     GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
@@ -136,8 +147,11 @@ decode() {
         echo "The last command failed to generate ${OUT}. Please check output for error."
         exit 1
     fi
-    #cat "${OUT}" | grep -P '^H-'  | cut -c 3- | sort -n -k 1 | awk -F "\t" '{print $NF}' | python detokenize.py > $PRED
-    # extract the 3rd to last column if the line starts with 'H-'
+    #################################
+    # Now do a little post-processing
+    #################################
+
+    # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
     cat "${OUT}" | grep -P '^H-' | \
         cut -c 3- | \
         # sort them numerically
@@ -150,6 +164,9 @@ decode() {
         sed -e 's/[[:space:]]*|/ @@/g' | \
         # Strip leading whitespace from the tokenization above and redirect to prediction file
         sed -e 's/^ //g' > $PRED
+
+    # Now take the first column of the gold file (the input word) as the first column
+    # and the generated prediction as the second column and output to .guess file
     cut -f 1 $GOLD_PATH | paste - $PRED > $GUESS
 }
 
