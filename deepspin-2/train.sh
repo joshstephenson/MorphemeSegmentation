@@ -115,6 +115,7 @@ decode() {
     CHECKPOINT="${MODEL_DIR}/checkpoint_last.pt"
     OUT="${OUT_DIR}/${MODE}-${BEAM}.out"
     PRED="${OUT_DIR}/${MODE}-${BEAM}.pred"
+    GUESS="${OUT_DIR}/${MODE}-${BEAM}.guess"
     # Bash won't overwrite the file
     # It's fine to regenerate
     if [ -f "${OUT}" ]; then
@@ -136,8 +137,21 @@ decode() {
         echo "The last command failed to generate ${OUT}. Please check output for error."
         exit 1
     fi
-    cat "${OUT}" | grep -P '^H-'  | cut -c 3- | sort -n -k 1 | awk -F "\t" '{print $NF}' | python detokenize.py > $PRED
-    cut -f 1 $GOLD_PATH | paste - $PRED > "${OUT_DIR}/${MODE}-${BEAM}.guess"
+    #cat "${OUT}" | grep -P '^H-'  | cut -c 3- | sort -n -k 1 | awk -F "\t" '{print $NF}' | python detokenize.py > $PRED
+    # extract the 3rd to last column if the line starts with 'H-'
+    cat "${OUT}" | grep -P '^H-' | \
+        cut -c 3- | \
+        # sort them numerically
+        sort -n -k 1 | \
+        # print only the last field
+        awk -F "\t" '{print $NF}' | \
+        # Remove whitespace and then replace underscores with whitespace (order here matters)
+        sed -e 's/[[:space:]]*//g' -e 's/[▁_]/ /g' | \
+        # swap out the internal morph separator to the external one
+        sed -e 's/[[:space:]]*|/ @@/g' | \
+        # Strip leading whitespace from the tokenization above and redirect to prediction file
+        sed -e 's/^ //g' > $PRED
+    cut -f 1 $GOLD_PATH | paste - $PRED > $GUESS
 }
 
 evaluate() {
