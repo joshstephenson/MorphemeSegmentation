@@ -22,6 +22,7 @@ readonly OUT_DIR="data/${LAN}/out"
 readonly RESULTS_DIR="data/${LAN}"
 readonly MODEL_DIR="data/${LAN}/models"
 readonly EVALUATE_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
+readonly GOLD_FILE="${DATASET}.test.gold.tsv"
 readonly DICT_FILE="${OUT_DIR}/dict.src.txt"
 readonly CHECKPOINT_BEST="${MODEL_DIR}/checkpoint_best.pt"
 readonly CHECKPOINT_LAST="${MODEL_DIR}/checkpoint_last.pt"
@@ -179,7 +180,7 @@ postprocess() {
     echo "Generated prediction file: ${PRED}"
     # Now take the first column of the gold file (the input word) as the first column
     # and the generated prediction as the second column and output to .guess file
-    cut -f 1 "${GOLD_PATH}" | paste - "${PRED}" > "${GUESS}"
+    cut -f 1 "${GOLD_FILE}" | paste - "${PRED}" > "${GUESS}"
     echo "Generated guess file: ${GUESS}"
 }
 
@@ -188,7 +189,7 @@ evaluate() {
     local -r MODE="test"
     # Applies the evaluation script to the generated TSV file.
     RESULTS_FILE="${RESULTS_DIR}/${MODE}-${BEAM}.results"
-    python $EVALUATE_SCRIPT --gold $GOLD_PATH --guess "${OUT_DIR}/${MODE}-${BEAM}.guess" > "${RESULTS_FILE}"
+    python $EVALUATE_SCRIPT --gold $GOLD_FILE --guess "${OUT_DIR}/${MODE}-${BEAM}.guess" > "${RESULTS_FILE}"
     if [ $? -ne 0 ]; then
         cat "${RESULTS_FILE}"
     else
