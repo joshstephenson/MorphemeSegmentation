@@ -10,7 +10,7 @@ if [ -z "${LAN}" ]; then
 fi
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
 HAS_GIT=$(which git)
-if [ $? -eq 0]; then
+if [ $? -eq 0 ]; then
     REPO_ROOT=$(git rev-parse --show-toplevel)
 else # Remote server doesn't have git command in task runner environment
     # This assumes that MorphemeSegmentation is at third depth from root: /home/user/MorphemeSegmentation
