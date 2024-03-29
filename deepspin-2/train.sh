@@ -162,6 +162,7 @@ postprocess() {
 
     # Extracts the predictions into a TSV file.
     # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
+    echo "Writing PRED file"
     cat "${OUT}" | grep -P '^H-' | \
         cut -c 3- | \
         # sort them numerically
