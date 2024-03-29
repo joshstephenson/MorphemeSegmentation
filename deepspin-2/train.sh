@@ -128,10 +128,9 @@ decode() {
         --path="${CHECKPOINT}" \
         --gen-subset="${FAIRSEQ_MODE}" \
         --beam="${BEAM}" \
+        > "${OUT}"
         #--alpha="${ENTMAX_ALPHA}" \
         #--batch-size 256 \
-        --max-sentences=256 \
-        > "${OUT}"
     # Extracts the predictions into a TSV file.
     if [ ! -f "${OUT}" ]; then
         echo "The last command failed to generate ${OUT}. Please check output for error."
@@ -173,15 +172,17 @@ if [ $? -ne 0 ]; then
     echo "The previous command failed. Stopping here"
     exit 1
 fi
+echo "Preprocessing succeeded"
 train
 if [ $? -ne 0 ]; then
     echo "The previous command failed. Stopping here"
     exit 1
 fi
+echo "Training succeeded"
 decode
 if [ $? -ne 0 ]; then
     echo "It appears decoding failed. Check output."
     exit 1
 fi
-echo "Decoding succeeded!"
+echo "Decoding succeeded"
 evaluate
