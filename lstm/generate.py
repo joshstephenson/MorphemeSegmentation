@@ -66,5 +66,4 @@ if __name__ == "__main__":
     parser.add_argument("file", type=str, help = 'path to model file')
     parser.add_argument("--use-cpu", type=bool, default=False)
     opt = parser.parse_args()
-    print(opt)
     main(opt.file, opt.use_cpu)
