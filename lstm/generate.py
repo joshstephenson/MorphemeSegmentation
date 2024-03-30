@@ -50,7 +50,7 @@ def main(file, cpu = False):
     pred_file = file.replace(config['model_ext'], config['predictions_ext'])
     results_file = file.replace(config['model_ext'], config['results_ext'])
     write_predictions(dataset, file)
-    test_predictions(file)
+    test_predictions(file, results_file)
     # write_predictions(dataset, use_heuristic=True)
     # test_predictions(use_heuristic=True)
 
