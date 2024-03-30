@@ -16,17 +16,21 @@ SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
 def main(file):
+    dropout = float(file.split('dropout_')[1].split('-')[0])
+    logger.info(f'Found model with dropout: {dropout}')
     config = Config()
     data = MorphemeDataLoader(config)
-    device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
+    # device = config.device()
+    device = torch.device('cpu')
     model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
+    # model = nn.Module()
     model.load_from_file(file)
     logger.info(model)
 
     dataset = data.test
 
-    def write_predictions(dataset):
-        pred_file = project_file(config, config['predictions_ext'],
+    def write_predictions(dataset, dropout):
+        pred_file = project_file(config, config['predictions_ext'], dropout,
                                  config['model_suffix'])
         assert pred_file is not None
         description = 'Writing predictions...'
@@ -38,11 +42,11 @@ def main(file):
                 f.write(line + "\n")
         logger.info(f"Predictions written to: {pred_file}")
 
-    def test_predictions():
-        pred_file = project_file(config, config['predictions_ext'],
+    def test_predictions(dropout):
+        pred_file = project_file(config, config['predictions_ext'], dropout,
                                  config['model_suffix']
                                  )
-        results_file = project_file(config, config['results_ext'], config['model_suffix'])
+        results_file = project_file(config, config['results_ext'], dropout, config['model_suffix'])
         lang = config['language']
         command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
         print(results_file)
@@ -52,8 +56,8 @@ def main(file):
         with open(results_file, 'w') as f:
             f.write(output)
 
-    write_predictions(dataset)
-    test_predictions()
+    write_predictions(dataset, dropout)
+    test_predictions(dropout)
     # write_predictions(dataset, use_heuristic=True)
     # test_predictions(use_heuristic=True)
 
