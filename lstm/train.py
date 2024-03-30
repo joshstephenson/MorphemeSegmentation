@@ -139,7 +139,8 @@ class Trainer():
             # morphs = [(morphs length - 1) * batch size]
             loss = self.criterion(output, morphs)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
+            if kwargs['clip'] > 0.0:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
             self.optimizer.step()
             epoch_loss += loss.item()
             pbar.set_description(f"{self.data.train.label}. Loss: {loss:.3f} (batch), {epoch_loss:.3f} (epoch)")
