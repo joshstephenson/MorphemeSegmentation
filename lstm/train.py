@@ -121,6 +121,7 @@ class Trainer():
                 logger.info(f"Stopping early after {i} epochs.")
                 break
         writer.close()
+        config.info(f'Model saved to: {self.model.model_file}')
 
     def _train(self, writer):
         kwargs = self.config['training']
@@ -143,7 +144,7 @@ class Trainer():
             # morphs = [(morphs length - 1) * batch size]
             loss = self.criterion(output, morphs)
             epoch_loss += loss.item()
-            writer.add_scalar('Loss/train', loss, epoch_loss)
+            writer.add_scalar('train-loss', loss, epoch_loss)
             loss.backward()
             if kwargs['clip'] > 0.0:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
@@ -154,7 +155,7 @@ class Trainer():
         logger.info(f'Batch {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
 
-    def _validate(self, use_test = False):
+    def _validate(self, writer, use_test = False):
         self.model.eval()
         epoch_loss = 0
         dataset = self.data.test if use_test else self.data.validation
@@ -174,6 +175,7 @@ class Trainer():
                 # morphs = [(morphs length - 1) * batch size]
                 loss = self.criterion(output, morphs)
                 epoch_loss += loss.item()
+                writer.add_scalar('valid-loss', loss, epoch_loss)
                 pbar.set_description(f"{dataset.label}. Loss: {loss:.3f} (batch), {epoch_loss:.3f} (epoch)")
         return epoch_loss / len(dataset.loader)
 
