@@ -98,8 +98,8 @@ class Trainer():
         logger.info(f'Trainable params: {num_trainable_params}')
         for i in range(config['training']['epochs']):
             logger.info(f"Epoch {i+1}")
-            train_loss = self._train(writer)
-            valid_loss = self._validate()
+            train_loss = self._train(i, writer)
+            valid_loss = self._validate(i, writer)
 
             # learning_rate = self.scheduler.get_last_lr()
             # self.logger.info(f'Learning rate is now: {learning_rate}')
@@ -111,7 +111,7 @@ class Trainer():
 
             # self.model.load_from_file(self.model.model_file)
 
-            test_loss = self._validate(use_test = True)
+            test_loss = self._validate(i, writer, use_test = True)
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
             # Nothing will occur here if early_stopping is False in config.yaml
@@ -123,7 +123,7 @@ class Trainer():
         writer.close()
         config.info(f'Model saved to: {self.model.model_file}')
 
-    def _train(self, writer):
+    def _train(self, epoch, writer):
         kwargs = self.config['training']
         self.model.train()
         epoch_loss = 0
@@ -144,8 +144,9 @@ class Trainer():
             # morphs = [(morphs length - 1) * batch size]
             loss = self.criterion(output, morphs)
             epoch_loss += loss.item()
-            writer.add_scalar('train-loss', loss, epoch_loss)
             loss.backward()
+            if i % 100 == 0:
+                writer.add_scalar('train-loss', loss, epoch_loss, epoch * len(self.data.train.loader) + i)
             if kwargs['clip'] > 0.0:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
             self.optimizer.step()
@@ -155,7 +156,7 @@ class Trainer():
         logger.info(f'Batch {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
 
-    def _validate(self, writer, use_test = False):
+    def _validate(self, epoch, writer, use_test = False):
         self.model.eval()
         epoch_loss = 0
         dataset = self.data.test if use_test else self.data.validation
@@ -175,7 +176,11 @@ class Trainer():
                 # morphs = [(morphs length - 1) * batch size]
                 loss = self.criterion(output, morphs)
                 epoch_loss += loss.item()
-                writer.add_scalar('valid-loss', loss, epoch_loss)
+                if i % 100 == 0:
+                    if use_test:
+                        writer.add_scalar('test-loss', loss, epoch_loss, epoch * len(self.data.train.loader) + i)
+                    else:
+                        writer.add_scalar('valid-loss', loss, epoch_loss, epoch * len(self.data.train.loader) + i)
                 pbar.set_description(f"{dataset.label}. Loss: {loss:.3f} (batch), {epoch_loss:.3f} (epoch)")
         return epoch_loss / len(dataset.loader)
 
