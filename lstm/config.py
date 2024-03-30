@@ -45,7 +45,10 @@ class Config():
         return device
 
     def optimizer(self, model):
-        return optim.Adam(model.parameters(), lr = self['training']['learning_rate'], weight_decay= self['training']['weight_decay'])
+        if self['training']['weight_decay'] > 0:
+            return optim.Adam(model.parameters(), lr = self['training']['learning_rate'], weight_decay= self['training']['weight_decay'])
+        else:
+            return optim.Adam(model.parameters(), lr=self['training']['learning_rate'])
 
     def criterion(self, pad_index):
         match self['training']['loss_criterion']:
