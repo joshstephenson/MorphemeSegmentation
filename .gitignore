@@ -166,5 +166,6 @@ baseline/morfessor/data
 data-bin/
 data/
 lstm/data
+lstm/runs
 deepspin-2/data
 deepspin-3/data

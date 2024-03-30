@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from config import Config
+from torch.utils.tensorboard import SummaryWriter
 
 
 class PlateauWithEarlyStopping:
@@ -92,10 +93,10 @@ class Trainer():
 
     def run(self):
         early_stopping = PlateauWithEarlyStopping(self.optimizer)
-
+        writer = SummaryWriter()
         for i in range(config['training']['epochs']):
             logger.info(f"Epoch {i+1}")
-            train_loss = self._train()
+            train_loss = self._train(writer)
             valid_loss = self._validate()
 
             # learning_rate = self.scheduler.get_last_lr()
@@ -117,8 +118,9 @@ class Trainer():
                 self.model.load_from_file(self.model.model_file) # reload the lowest valid loss checkpoint
                 logger.info(f"Stopping early after {i} epochs.")
                 break
+        writer.close()
 
-    def _train(self):
+    def _train(self, writer):
         kwargs = self.config['training']
         self.model.train()
         epoch_loss = 0
@@ -138,11 +140,12 @@ class Trainer():
             morphs = morphs[1:].view(-1)
             # morphs = [(morphs length - 1) * batch size]
             loss = self.criterion(output, morphs)
+            epoch_loss += loss.item()
+            writer.add_scalar('Loss/train', loss, epoch_loss)
             loss.backward()
             if kwargs['clip'] > 0.0:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), kwargs['clip'])
             self.optimizer.step()
-            epoch_loss += loss.item()
             pbar.set_description(f"{self.data.train.label}. Loss: {loss:.3f} (batch), {epoch_loss:.3f} (epoch)")
             # if i % 100 == 0:
             #     logger.info(f'i: {i}, loss: {loss.item()}: epoch: {epoch_loss}')
