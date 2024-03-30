@@ -28,6 +28,7 @@ def main(file, cpu = False):
 
     def write_predictions(dataset, pred_file):
         assert pred_file is not None
+        logger.info(f'Writing predictions to {pred_file}')
         description = 'Writing predictions...'
         with open(pred_file, 'w') as f:
             for word, morphs in tqdm(dataset[:], total=len(data.test.words), desc=description):
@@ -36,12 +37,12 @@ def main(file, cpu = False):
                 line = "".join(word[1:-1]) + '\t' + pred
                 f.write(line + "\n")
 
-    def test_predictions(pref_file, results_file):
+    def test_predictions(pred_file, results_file):
         lang = config['language']
         command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
-        print(results_file)
+        logger.info(results_file)
         output = subprocess.run(command, capture_output=True).stdout.decode("utf-8")
-        print(output)
+        logger.info(output)
 
         with open(results_file, 'w') as f:
             f.write(output)
@@ -50,8 +51,8 @@ def main(file, cpu = False):
     results_file = file.replace(config['model_ext'], config['results_ext'])
     assert pred_file != file
     assert results_file != file
-    print(f'pred_file: {pred_file}, results_file: {results_file}')
-    write_predictions(dataset, file)
+    logger.info(f'pred_file: {pred_file}, results_file: {results_file}')
+    write_predictions(dataset, pred_file)
     logger.info(f"Predictions written to: {pred_file}")
     test_predictions(file, results_file)
     # write_predictions(dataset, use_heuristic=True)
