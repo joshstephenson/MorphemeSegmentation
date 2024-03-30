@@ -58,4 +58,12 @@ class Config():
     def __getitem__(self, item):
         return self.config[item]
 
+    def info(self, message):
+        """
+        helper message because I can't help but continue writing 'config.info' instead of logger.info
+        :param message:
+        :return:
+        """
+        logger.info(message)
+
 

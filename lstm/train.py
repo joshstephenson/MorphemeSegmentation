@@ -121,7 +121,7 @@ class Trainer():
                 logger.info(f"Stopping early after {i} epochs.")
                 break
         writer.close()
-        config.info(f'Model saved to: {self.model.model_file}')
+        logger.info(f'Model saved to: {self.model.model_file}')
 
     def _train(self, epoch, writer):
         kwargs = self.config['training']
