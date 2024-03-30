@@ -173,10 +173,8 @@ class Trainer():
         return epoch_loss / len(dataset.loader)
 
 def main():
-    for d in range(1,6):
-        print(f'Dropout: {d/10}')
-        trainer = Trainer(dropout = d/10)
-        trainer.run()
+    trainer = Trainer(dropout = config['encoder_decoder']['dropout'])
+    trainer.run()
 
 
 if __name__ == '__main__':
