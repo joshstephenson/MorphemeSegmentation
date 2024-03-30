@@ -5,7 +5,7 @@ source ./train.conf
 
 yoyodyne-train \
     --model_dir "${MODEL_DIR}" \
-    --experiment "morphemes" \
+    --experiment "${EXPERIMENT}" \
     --dropout 0.3 \
     --train "${TRAIN_DATA}" \
     --val "${VAL_DATA}" \
