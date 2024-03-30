@@ -48,6 +48,8 @@ def main(file, cpu = False):
 
     pred_file = file.replace(config['model_ext'], config['predictions_ext'])
     results_file = file.replace(config['model_ext'], config['results_ext'])
+    assert pred_file != file
+    assert results_file != file
     print(f'pred_file: {pred_file}, results_file: {results_file}')
     write_predictions(dataset, file)
     logger.info(f"Predictions written to: {pred_file}")
