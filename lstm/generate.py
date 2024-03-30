@@ -35,7 +35,6 @@ def main(file, cpu = False):
                 pred = postprocess(pred)
                 line = "".join(word[1:-1]) + '\t' + pred
                 f.write(line + "\n")
-        logger.info(f"Predictions written to: {pred_file}")
 
     def test_predictions(pref_file, results_file):
         lang = config['language']
@@ -49,7 +48,9 @@ def main(file, cpu = False):
 
     pred_file = file.replace(config['model_ext'], config['predictions_ext'])
     results_file = file.replace(config['model_ext'], config['results_ext'])
+    print(f'pred_file: {pred_file}, results_file: {results_file}')
     write_predictions(dataset, file)
+    logger.info(f"Predictions written to: {pred_file}")
     test_predictions(file, results_file)
     # write_predictions(dataset, use_heuristic=True)
     # test_predictions(use_heuristic=True)

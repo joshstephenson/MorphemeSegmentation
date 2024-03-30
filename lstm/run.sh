@@ -11,6 +11,7 @@ if [ -z "$LAN" ]; then
     python train.py
 else
     ROOT="./data/$LAN"
+    echo "Running generate.py ..."
     for dir in $(ls "${ROOT}/"); do
         file=$(ls "${ROOT}/${dir}/$LAN-by_char.pt")
         echo "Found model: $file"
@@ -25,7 +26,6 @@ else
             exit 1
         fi
     done
-    echo "Running generate.py ..."
 fi
 
 
