@@ -37,26 +37,8 @@ def main(file, cpu = False):
                 line = "".join(word[1:-1]) + '\t' + pred
                 f.write(line + "\n")
 
-    def test_predictions(pred_file, results_file):
-        lang = config['language']
-        command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
-        logger.info(results_file)
-        output = subprocess.run(command, capture_output=True).stdout.decode("utf-8")
-        logger.info(output)
-
-        with open(results_file, 'w') as f:
-            f.write(output)
-
     pred_file = file.replace(config['model_ext'], config['predictions_ext'])
-    results_file = file.replace(config['model_ext'], config['results_ext'])
-    assert pred_file != file
-    assert results_file != file
-    logger.info(f'pred_file: {pred_file}, results_file: {results_file}')
     write_predictions(dataset, pred_file)
-    logger.info(f"Predictions written to: {pred_file}")
-    test_predictions(file, results_file)
-    # write_predictions(dataset, use_heuristic=True)
-    # test_predictions(use_heuristic=True)
 
 
 if __name__ == "__main__":
