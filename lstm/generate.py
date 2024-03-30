@@ -47,8 +47,8 @@ def main(file, cpu = False):
         with open(results_file, 'w') as f:
             f.write(output)
 
-    pred_file = file.replace(config['model_extension'], config['predictions_ext'])
-    results_file = file.replace(config['model_extension'], config['results_ext'])
+    pred_file = file.replace(config['model_ext'], config['predictions_ext'])
+    results_file = file.replace(config['model_ext'], config['results_ext'])
     write_predictions(dataset, file)
     test_predictions(file)
     # write_predictions(dataset, use_heuristic=True)
