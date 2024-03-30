@@ -15,15 +15,14 @@ logger.setLevel(logging.WARN)
 SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
-def main(file):
+def main(file, cpu = False):
     dropout = float(file.split('dropout_')[1].split('-')[0])
     logger.info(f'Found model with dropout: {dropout}')
     config = Config()
     data = MorphemeDataLoader(config)
-    # device = config.device()
-    device = torch.device('cpu')
+    device = torch.device('cpu') if cpu else config.device()
     model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
-    # model = nn.Module()
+
     model.load_from_file(file)
     logger.info(model)
 
@@ -65,5 +64,7 @@ def main(file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generator')
     parser.add_argument("file", type=str, help = 'path to model file')
+    parser.add_argument("--use-cpu", type=bool, default=False)
     opt = parser.parse_args()
-    main(opt.file)
+    print(opt)
+    main(opt.file, opt.use_cpu)

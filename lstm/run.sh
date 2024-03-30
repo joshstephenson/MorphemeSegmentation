@@ -15,7 +15,7 @@ else
         file=$(ls "${ROOT}/${dir}/$LAN-by_char.pt")
         echo "Found model: $file"
         if [ -f "${file}" ]; then
-            python generate.py $file
+            python generate.py $file $@
         else
             echo "No file: $file"
             exit 1
