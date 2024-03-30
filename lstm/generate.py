@@ -16,8 +16,6 @@ SOS_TOKEN = config['special_tokens']['sos_token']
 EOS_TOKEN = config['special_tokens']['eos_token']
 
 def main(file, cpu = False):
-    dropout = float(file.split('dropout_')[1].split('-')[0])
-    logger.info(f'Found model with dropout: {dropout}')
     config = Config()
     data = MorphemeDataLoader(config)
     device = torch.device('cpu') if cpu else config.device()
@@ -28,9 +26,7 @@ def main(file, cpu = False):
 
     dataset = data.test
 
-    def write_predictions(dataset, dropout):
-        pred_file = project_file(config, config['predictions_ext'], dropout,
-                                 config['model_suffix'])
+    def write_predictions(dataset, pred_file):
         assert pred_file is not None
         description = 'Writing predictions...'
         with open(pred_file, 'w') as f:
@@ -41,11 +37,7 @@ def main(file, cpu = False):
                 f.write(line + "\n")
         logger.info(f"Predictions written to: {pred_file}")
 
-    def test_predictions(dropout):
-        pred_file = project_file(config, config['predictions_ext'], dropout,
-                                 config['model_suffix']
-                                 )
-        results_file = project_file(config, config['results_ext'], dropout, config['model_suffix'])
+    def test_predictions(pref_file, results_file):
         lang = config['language']
         command = ["python", f"../2022SegmentationST/evaluation/evaluate.py", "--gold", f"../2022SegmentationST/data/{lang}.word.test.gold.tsv", "--guess", pred_file]
         print(results_file)
@@ -55,8 +47,10 @@ def main(file, cpu = False):
         with open(results_file, 'w') as f:
             f.write(output)
 
-    write_predictions(dataset, dropout)
-    test_predictions(dropout)
+    pred_file = file.replace(config['model_extension'], config['predictions_ext'])
+    results_file = file.replace(config['model_extension'], config['results_ext'])
+    write_predictions(dataset, file)
+    test_predictions(file)
     # write_predictions(dataset, use_heuristic=True)
     # test_predictions(use_heuristic=True)
 
