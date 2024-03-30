@@ -94,6 +94,8 @@ class Trainer():
     def run(self):
         early_stopping = PlateauWithEarlyStopping(self.optimizer)
         writer = SummaryWriter()
+        num_trainable_params = sum([p.numel() for p in self.model.parameters()])
+        logger.info(f'Trainable params: {num_trainable_params}')
         for i in range(config['training']['epochs']):
             logger.info(f"Epoch {i+1}")
             train_loss = self._train(writer)
