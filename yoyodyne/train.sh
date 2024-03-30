@@ -26,4 +26,5 @@ yoyodyne-train \
     --experiment "morphemes" \
     --train "${TRAIN_DATA}" \
     --val "${VAL_DATA}" \
-    --arch attentive_lstm
+    --arch attentive_lstm \
+    --max_epochs 10
