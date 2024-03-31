@@ -25,17 +25,17 @@ def segment_word(word, model, dataset, device, max_output_length=config['predict
             inputs_tensor = torch.LongTensor([inputs[-1]]).to(device)
             output, hidden, cell = model.decoder(inputs_tensor, hidden, cell)
             predicted_token = output.argmax(-1).item()
-            inputs.append(predicted_token)
-            if predicted_token == morph_vocab[EOS_TOKEN]:
-                last_index = -1
-                break
-        try:
-            tokens = morph_vocab.lookup_tokens(inputs)
-        except Exception as e:
-            logger.critical(morph_vocab.get_itos())
-            logger.critical(f'word: {"".join(word)}, indices: {inputs}')
-            logger.critical(str(e))
-            raise(e)
+            if predicted_token < dataset.morph_len:
+                inputs.append(predicted_token)
+                if predicted_token == morph_vocab[EOS_TOKEN]:
+                    last_index = -1
+                    break
+                tokens = morph_vocab.lookup_tokens(inputs)
+            else:
+                logger.critical(morph_vocab.get_itos())
+                logger.critical(f'word: {"".join(word)}, indices: {inputs}')
+                logger.critical(str(e))
+
         prediction = "".join(tokens[1:last_index])
     return prediction
 

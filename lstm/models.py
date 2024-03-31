@@ -22,8 +22,10 @@ class Encoder(nn.Module):
         self.hidden_dim = config['encoder_decoder']['hidden_dim']
         self.n_layers = config['encoder_decoder']['n_layers']
         self.embedding = nn.Embedding(input_dim, config['encoder_decoder']['embedding_dim'])
-        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'], config['encoder_decoder']['hidden_dim'],
+        self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'],
+                           config['encoder_decoder']['hidden_dim'],
                            config['encoder_decoder']['n_layers'],
+                           dropout=config['encoder_decoder']['dropout'],
                            bidirectional=config['encoder_decoder']['bidirectional'])
         self.dropout = nn.Dropout(p=dropout)
 
