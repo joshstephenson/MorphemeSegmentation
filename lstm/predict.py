@@ -29,7 +29,13 @@ def segment_word(word, model, dataset, device, max_output_length=config['predict
             if predicted_token == morph_vocab[EOS_TOKEN]:
                 last_index = -1
                 break
-        tokens = morph_vocab.lookup_tokens(inputs)
+        try:
+            tokens = morph_vocab.lookup_tokens(inputs)
+        except Exception as e:
+            logger.critical(morph_vocab.get_itos())
+            logger.critical(f'word: {"".join(word)}, indices: {inputs}')
+            logger.critical(str(e))
+            raise(e)
         prediction = "".join(tokens[1:last_index])
     return prediction
 
