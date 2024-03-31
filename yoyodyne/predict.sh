@@ -13,6 +13,7 @@ else
     echo "Generating predictions..."
     yoyodyne-predict \
         --checkpoint "$1" \
+        --arch "${ARCHITECTURE}" \
         --model_dir "${MODEL_DIR}" \
         --experiment "${EXPERIMENT}" \
         --predict "${TEST_DATA}" \
