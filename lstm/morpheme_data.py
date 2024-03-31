@@ -76,6 +76,10 @@ class MorphemeDataLoader:
             self.morph_len = len(self.morph_vocab)
             self.word_count = len(self.words)
 
+            # print(self.word_vocab.get_itos())
+            # print(self.morph_vocab.get_itos())
+            # print(set(self.word_vocab.get_itos()) - set(self.morph_vocab.get_itos()))
+            # print(set(self.morph_vocab.get_itos()) - set(self.word_vocab.get_itos()))
             ids = Dataset.from_dict({"word_ids": [self.word_vocab.lookup_indices(word) for word in self.words],
                                      "morph_ids": [self.morph_vocab.lookup_indices(morph_set) for morph_set in
                                                    self.morphs]})
