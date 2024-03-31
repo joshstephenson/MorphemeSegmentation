@@ -83,7 +83,7 @@ class Seq2Seq(nn.Module):
         self.encoder = Encoder(input_dim, dropout)
         self.decoder = Decoder(output_dim, dropout)
         self.device = device
-        self.model_file = config.model_file(dropout)
+        self.model_file = config.model_file()
         assert (
                 self.encoder.hidden_dim == self.decoder.hidden_dim
         ), "Hidden dimensions of encoder and decoder must be equal!"

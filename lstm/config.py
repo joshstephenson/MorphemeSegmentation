@@ -5,6 +5,8 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import random
+import sys
+import argparse
 from entmax.losses import Entmax15Loss
 
 logger = get_logger()
@@ -28,8 +30,8 @@ class Config():
         random.seed(config['seed'])
 
 
-    def model_file(self, dropout):
-        return project_file(self.config, self.config['model_ext'], dropout, self.config['model_suffix'])
+    def model_file(self):
+        return project_file(self.config, self.config['model_ext'], self.config['model_suffix'])
 
     def device(self):
         """
@@ -46,7 +48,7 @@ class Config():
 
     def optimizer(self, model):
         if self['training']['weight_decay'] > 0:
-            return optim.Adam(model.parameters(), lr = self['training']['learning_rate'], weight_decay= self['training']['weight_decay'])
+            return optim.Adam(model.parameters(), lr = self['training']['learning_rate'], weight_decay=self['training']['weight_decay'])
         else:
             return optim.Adam(model.parameters(), lr=self['training']['learning_rate'])
 
@@ -69,4 +71,15 @@ class Config():
         """
         logger.info(message)
 
+def main(args):
+    config = Config()
+    if args.l:
+        sys.stdout.write(config['language'] + "\n")
+    else:
+        sys.stdout.write(config.model_file() + "\n")
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generator')
+    parser.add_argument("-l", action='store_true', help='return language name')
+    opt = parser.parse_args()
+    main(opt)
