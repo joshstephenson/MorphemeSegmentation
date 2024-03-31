@@ -34,7 +34,6 @@ def segment_word(word, model, dataset, device, max_output_length=config['predict
             else:
                 logger.critical(morph_vocab.get_itos())
                 logger.critical(f'word: {"".join(word)}, indices: {inputs}')
-                logger.critical(str(e))
 
         prediction = "".join(tokens[1:last_index])
     return prediction
