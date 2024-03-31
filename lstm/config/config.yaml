@@ -10,7 +10,7 @@ seed: 1234
 preprocessing:
   min_freq: 2
   batch_size: 256
-  shuffle: True
+  shuffle: False
   initial_weights: 0.8
 
 encoder_decoder:
