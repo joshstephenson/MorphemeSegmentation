@@ -32,8 +32,9 @@ def segment_word(word, model, dataset, device, max_output_length=config['predict
                     break
                 tokens = morph_vocab.lookup_tokens(inputs)
             else:
-                logger.critical(morph_vocab.get_itos())
-                logger.critical(f'word: {"".join(word)}, indices: {inputs}')
+                logger.critical('MORPHS: ', {i: v for i,v in enumerate(morph_vocab.get_itos())})
+                logger.critical('WORDS: ', {i: v for i,v in enumerate(word_vocab.get_itos())})
+                logger.critical(f'word: {"".join(word)}, indices: {inputs} -> {predicted_token}')
 
         prediction = "".join(tokens[1:last_index])
     return prediction
