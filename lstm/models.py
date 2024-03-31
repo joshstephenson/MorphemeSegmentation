@@ -132,6 +132,7 @@ class Seq2Seq(nn.Module):
         logger.info(f'saved model to: {self.model_file}')
 
     def load_from_file(self, file):
+        logger.info(f'Attempting to load from file: {file}')
         if not os.path.exists(file):
             logger.exception(file)
             logger.exception("No model file found. Perhaps you forgot to train first?")

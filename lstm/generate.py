@@ -19,10 +19,8 @@ def main():
     config = Config()
     data = MorphemeDataLoader(config)
     device = config.device()
-    model = Seq2Seq(data.train.word_len, data.train.morph_len, device).to(device)
-
+    model = Seq2Seq(data.train.word_len, data.train.morph_len, device, config['encoder_decoder']['dropout']).to(device)
     model.load_from_file(model.model_file)
-    logger.info(model)
 
     dataset = data.test
 
