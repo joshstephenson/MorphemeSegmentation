@@ -1,6 +1,11 @@
 ## Generating segmentations with BertTokenizer
 This will use 2 different pretrained models depending on the input language. To run generate the segments and run the evaluation script:
 ```
+./generate_all_langs.sh
+```
+
+or
+```
 ./run.sh <language code>
 ```
 
@@ -16,11 +21,15 @@ Language options include:
 |Russian|rus|
 |Spanish|spa|
 
-output example for Mongolian (mon):
-```
-category: all
-distance	7.63
-f_measure	5.27
-precision	3.70
-recall	9.12
-```
+Results from `generate_all_langs.sh`:
+|Language|Epochs|F1 Score|
+|--------|------|--------|
+|Hungarian|	6|	37.34|
+|Czeck|	7|	29.79|
+|English|	6|	45.14|
+|French|	8|	21.37|
+|Italian|	6|	13.79|
+|Latin|	10|	18.10|
+|Mongolian|	6|	43.26|
+|Russian|	8|	10.46|
+|Spanish|	7|	9.23|
