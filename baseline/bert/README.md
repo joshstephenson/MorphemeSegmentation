@@ -33,3 +33,16 @@ Results from `generate_all_langs.sh`:
 |Mongolian|	6|	43.26|
 |Russian|	8|	10.46|
 |Spanish|	7|	9.23|
+
+Results from `generate_all_langs.sh`:
+|Language|Epochs|F1 Score|
+|--------|------|--------|
+|Hungarian|	6|	24.00|
+|Czeck|	7|	20.42|
+|English|	6|	24.43|
+|French|	8|	12.66|
+|Italian|	6|	9.08|
+|Latin|	10|	8.84|
+|Mongolian|	6|	5.27|
+|Russian|	8|	13.81|
+|Spanish|	7|	16.57|
