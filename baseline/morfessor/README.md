@@ -21,7 +21,7 @@ Language options include:
 |Russian|rus|
 |Spanish|spa|
 
-Results from `generate_all_langs.sh`:
+Results from `generate_all_langs.sh`. Note this includes the number of epochs it took before training was stopped due to loss plateauing.
 |Language|Epochs|F1 Score|
 |--------|------|--------|
 |Hungarian|	6|	37.34|
