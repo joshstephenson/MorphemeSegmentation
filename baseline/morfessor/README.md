@@ -1,10 +1,13 @@
-## Generating segmentations with BertTokenizer
+## Generating segmentations with Morfessor 2.0
 This will train, generate morphs and run the evaluation script:
+```
+./generate_all_langs.sh
+```
+
+or
 ```
 ./run.sh <language code>
 ```
-
-If it finds a model in `data/<lang>`, it will use it rather than retrain the model. Make sure to move it if you want it to be retrained.
 
 Language options include:
 | Language | Language code |
@@ -18,11 +21,15 @@ Language options include:
 |Russian|rus|
 |Spanish|spa|
 
-output example for Mongolian (mon):
-```
-category: all
-distance	2.11
-f_measure	43.26
-precision	46.88
-recall	40.16
-```
+Results from `generate_all_langs.sh`. Note this includes the number of epochs it took before training was stopped due to loss plateauing.
+|Language|Epochs|F1 Score|
+|--------|------|--------|
+|Hungarian|	6|	37.34|
+|Czeck|	7|	29.79|
+|English|	6|	45.14|
+|French|	8|	21.37|
+|Italian|	6|	13.79|
+|Latin|	10|	18.10|
+|Mongolian|	6|	43.26|
+|Russian|	8|	10.46|
+|Spanish|	7|	9.23|

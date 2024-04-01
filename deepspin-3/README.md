@@ -16,6 +16,7 @@ Language options include:
 |Russian|rus|
 |Spanish|spa|
 
+Configuration variables can be tweaked in `train.conf`.
 
 output:
 ```

@@ -1,7 +1,7 @@
 ### Training and Evaluating
 To train, segment and evaluate this model use:
 ```
-./ftrain.sh <language code>
+./train.sh <language code>
 
 ```
 Language options include:
@@ -16,6 +16,7 @@ Language options include:
 |Russian|rus|
 |Spanish|spa|
 
+Configuration variables can be tweaked in `train.conf`.
 
 output:
 ```
