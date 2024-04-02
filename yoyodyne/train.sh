@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 
-source ./train.conf
+source ./conf.sh
 
 yoyodyne-train \
     --model_dir "${MODEL_DIR}" \

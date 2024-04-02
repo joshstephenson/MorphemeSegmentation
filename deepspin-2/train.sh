@@ -3,37 +3,14 @@
 #
 # Improved to make this a one-and-done script for preprocessing, training, decoding, postprocessing and evaluation
 # Only required argument is the language code
-LAN=$1 # Should match the name of the languages available in ../2022SegmentationST/data
-if [ -z "${LAN}" ]; then
-    echo "Please provide a language code. Options {ces|eng|fra|hun|ita|lat|mon|rus|spa}."
-    exit 1
-fi
-readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
-HAS_GIT=$(which git)
-if [ $? -eq 0 ]; then
-    REPO_ROOT=$(git rev-parse --show-toplevel)
-else # Remote server doesn't have git command in task runner environment
-    # This assumes that MorphemeSegmentation is at third depth from root: /home/user/MorphemeSegmentation
-    REPO_ROOT="$(pwd | cut -d / -f 1,2,3)/MorphemeSegmentation"
-fi
-readonly DATASET="${REPO_ROOT}/2022SegmentationST/data/${LAN}.word"
-readonly IN_DIR="data/${LAN}/in"
-readonly OUT_DIR="data/${LAN}/out"
-readonly RESULTS_DIR="data/${LAN}"
-readonly MODEL_DIR="data/${LAN}/models"
-readonly EVALUATE_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
-readonly GOLD_FILE="${DATASET}.test.gold.tsv"
-readonly DICT_FILE="${OUT_DIR}/dict.src.txt"
-readonly CHECKPOINT_BEST="${MODEL_DIR}/checkpoint_best.pt"
-readonly CHECKPOINT_LAST="${MODEL_DIR}/checkpoint_last.pt"
 
-# Check if valid language
-if [ ! -f "${DATASET}.train.tsv" ]; then
-    echo "${LAN} is not a valid language option.  Options {ces|eng|fra|hun|ita|lat|mon|rus|spa}."
-    exit 1
-fi
-if [ ! -d "${IN_DIR}" ]; then
-    mkdir -p "${IN_DIR}"
+# Load configuration variables from train.conf
+source ./deepspin-2.conf
+source ../deepspin-shared.conf
+
+
+if [ ! -d "${PREPROCESSED_DIR}" ]; then
+    mkdir -p "${PREPROCESSED_DIR}"
 fi
 if [ ! -d "${OUT_DIR}" ]; then
     mkdir -p "${OUT_DIR}"
@@ -41,40 +18,41 @@ fi
 if [ ! -d "${MODEL_DIR}" ]; then
     mkdir -p "${MODEL_DIR}"
 fi
-source ./train.conf
-
-log() {
-    printf '=%.0s' {1..80}
-    printf "\n${1}\n"
-    printf '=%.0s' {1..80}
-    printf '\n'
-}
 
 preprocess() {
     log "Preprocessing..."
     if [ -f "${DICT_FILE}" ]; then
         echo "Files already preprocessed. Moving on."
-        cd "${IN_DIR}"
+        cd "${PREPROCESSED_DIR}"
         return 0
     fi
     for TASK in "train" "dev" "test.gold" ; do
         for FILE in "${DATASET}.${TASK}.tsv"; do
-            SRC_FILE="${IN_DIR}/${TASK}.src"
-            TGT_FILE="${IN_DIR}/${TASK}.tgt"
+            SOURCE_FILE="${PREPROCESSED_DIR}/${TASK}.${SOURCE}"
+            TARGET_FILE="${PREPROCESSED_DIR}/${TASK}.${TARGET}"
             # Segment the source strings by separating each grapheme (char)
-            cut -f 1 "${FILE}" | sed 's/./& /g' > "${SRC_FILE}"
+            cut -f 1 "${FILE}" | sed 's/./& /g' > "${SOURCE_FILE}"
             # Segment the target strings by separating each morph
             # Change morph separator to single @ and spaces to underscores
-            cut -f 2 "${FILE}" | sed 's/@@/|/g' > "${TGT_FILE}"
-            echo "Created files: ${SRC_FILE} and ${TGT_FILE}"
+            cut -f 2 "${FILE}" | sed 's/@@/|/g' > "${TARGET_FILE}"
+            echo "Created files: ${SOURCE_FILE} and ${TARGET_FILE}"
         done
     done
 
     echo "Moving on to fairseq-preprocess"
-    cd "${IN_DIR}"
+
+    # REMOVE previously preprocessed files or fairseq will exit 1
+    TXT_FILE1="${OUT_DIR}/dict.${SOURCE}.txt"
+    TXT_FILE2="${OUT_DIR}/dict.${TARGET}.txt"
+    if [ -f "${TXT_FILE1}" ] || [ -f "${TXT_FILE2}" ] ; then
+        echo "Removing previously processed files"
+        rm "${TXT_FILE1}" "${TXT_FILE2}" > /dev/null 2>&1
+    fi
+
+    cd "${PREPROCESSED_DIR}"
     fairseq-preprocess \
-        --source-lang="src" \
-        --target-lang="tgt" \
+        --source-lang="${SOURCE}" \
+        --target-lang="${TARGET}" \
         --trainpref=train \
         --validpref=dev \
         --testpref=test.gold \
@@ -84,15 +62,6 @@ preprocess() {
         --destdir="../../${LAN}/out"
 }
 
-get_checkpoint() {
-    if [ -f "${CHECKPOINT_BEST}" ]; then
-        CHECKPOINT="${CHECKPOINT_BEST}"
-    elif [ -f "${CHECKPOINT_LAST}" ]; then
-        CHECKPOINT="${CHECKPOINT_LAST}"
-    else
-        CHECKPOINT=""
-    fi
-}
 train() {
     cd ../../..
     get_checkpoint
@@ -103,8 +72,8 @@ train() {
         fairseq-train \
             "${OUT_DIR}/" \
             --save-dir="${MODEL_DIR}" \
-            --source-lang="src" \
-            --target-lang="tgt" \
+            --source-lang="${SOURCE}" \
+            --target-lang="${TARGET}" \
             --disable-validation \
             --seed="${SEED}" \
             --arch=lstm \
@@ -142,8 +111,8 @@ decode() {
         log "Decoding..."
         fairseq-generate \
             "${OUT_DIR}" \
-            --source-lang="src" \
-            --target-lang="tgt" \
+            --source-lang="${SOURCE}" \
+            --target-lang="${TARGET}" \
             --path="${CHECKPOINT}" \
             --gen-subset="${FAIRSEQ_MODE}" \
             --beam="${BEAM}" \
@@ -168,7 +137,7 @@ postprocess() {
 
     # Extracts the predictions into a TSV file.
     # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
-    echo "Writing PRED file"
+    echo "Writing predictions"
     cat "${OUT_FILE}" | grep -P '^H-' | \
         cut -c 3- | \
         # sort them numerically

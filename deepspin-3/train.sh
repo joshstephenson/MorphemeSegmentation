@@ -1,41 +1,19 @@
 #!/usr/bin/env bash
 
 # Load configuration variables from train.conf
-source ./train.conf
+source ./deepspin-3.conf
+source ../deepspin-shared.conf
 
-# Make sure the user provides a valid language
-if [ -z "$1" ]; then
-    echo "Please provide a language name {ces|eng|fra|hun|ita|lat|mon|rus|spa}."
-    exit 1
-fi
-readonly LAN="$1"; shift
-readonly PREPROCESSED_DIR="data/${LAN}/in"
-readonly MODEL_DIR="data/${LAN}/models"
-readonly OUT_DIR="data/${LAN}/out"
-HAS_GIT=$(which git)
-if [ $? -eq 0 ]; then
-    REPO_ROOT=$(git rev-parse --show-toplevel)
-else # Remote server doesn't have git command in task runner environment
-    # This assumes that MorphemeSegmentation is at third depth from root: /home/user/MorphemeSegmentation
-    REPO_ROOT="$(pwd | cut -d / -f 1,2,3)/MorphemeSegmentation"
-fi
-readonly IN_DIR="${REPO_ROOT}/2022SegmentationST/data"
-readonly INPUT_PATH="${IN_DIR}/${LAN}.word"
-readonly GOLD_FILE="2022SegmentationST/data/${LAN}.word.test.gold.tsv"
 readonly GRID_LOC=$MODEL_DIR
-readonly EVALUATE_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
-if [ "${LAN}" == "mon" ]; then
+
+# Mongolian and Czeck don't have enough data to support vocab size of 6000
+if [ "${LAN}" == "mon" ] || [ "${LAN}" == "ces" ]; then
     VOCAB=2000
 fi
 
-# Create directories recursively if necessary
-mkdir -p "$PREPROCESSED_DIR"
-mkdir -p "$OUT_DIR"
-mkdir -p "$GRID_LOC"
-
 echo "GOLD PATH: ${GOLD_FILE}"
 echo "GRID LOC: ${GRID_LOC}"
-echo "INPUT PATH: ${INPUT_PATH}"
+echo "INPUT PATH: ${DATASET}"
 echo "OUT DIR: ${OUT_DIR}"
 echo "VOCAB: ${VOCAB}"
 
@@ -44,35 +22,32 @@ echo "VOCAB: ${VOCAB}"
 ###################
 
 preprocess() {
-    TRAIN_FILE="${INPUT_PATH}.train.tsv"
-    DEV_FILE="${INPUT_PATH}.dev.tsv"
-    GOLD_FILE="${INPUT_PATH}.test.gold.tsv"
-
+    log "Preprocessing..."
     # Hack for Mongolian
     # Mongolian training set is in a sub-folder because it was a "surprise" language
     if [ "${LAN}" == "mon" ]; then
-        INPUT_PATH2="${IN_DIR}/surprise/${LAN}.word"
-        TRAIN_FILE="${INPUT_PATH2}.train.tsv"
-        DEV_FILE="${INPUT_PATH2}.dev.tsv"
+        DATASET2="${IN_DIR}/surprise/${LAN}.word"
+        TRAIN_FILE="${DATASET2}.train.tsv"
+        DEV_FILE="${DATASET2}.dev.tsv"
     fi
 
     # Run sentencepiece tokenizer script
     # This is a key part of why the transformer works well
     python tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir $OUT_DIR --split train $@
     if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
-    python tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/src" --existing-tgt-spm "${OUT_DIR}/tgt" --out-dir $OUT_DIR --split dev --shared-data
+    python tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split dev --shared-data
     if [ $? -ne 0 ]; then echo "Tokenizing dev failed" && exit 1 ; fi
-    python tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/src" --existing-tgt-spm "${OUT_DIR}/tgt" --out-dir $OUT_DIR --split test --shared-data
+    python tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
     if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
 
-    SOURCE_VOCAB="${OUT_DIR}/src.fairseq.vocab"
-    TARGET_VOCAB="${OUT_DIR}/tgt.fairseq.vocab"
-    tail -n +4 "${OUT_DIR}/src.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
-    tail -n +4 "${OUT_DIR}/tgt.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
+    SOURCE_VOCAB="${OUT_DIR}/${SOURCE}.fairseq.vocab"
+    TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
+    tail -n +4 "${OUT_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
+    tail -n +4 "${OUT_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
     #cd "${PREPROCESSED_DIR}"
     fairseq-preprocess \
-        --source-lang="src" \
-        --target-lang="tgt" \
+        --source-lang="${SOURCE}" \
+        --target-lang="${TARGET}" \
         --trainpref="${OUT_DIR}/train" \
         --validpref="${OUT_DIR}/dev" \
         --testpref="${OUT_DIR}/test" \
@@ -98,11 +73,12 @@ train() {
     local -r WARMUP=$1; shift
     local -r DROPOUT=$1; shift
     local -r BATCH=$1; shift
+    log "Training\n\t Embeddings: ${EMB}\n\t Hidden: ${HID}\n\t Layers: ${LAYERS}\n\t Heads: ${HEADS}\n\t Warmup: ${WARMUP}\n\t Dropout: ${DROPOUT}\n\t Batch: ${BATCH}"
     fairseq-train \
         "${OUT_DIR}" \
         --save-dir="${THIS_MODEL_DIR}" \
-        --source-lang="src" \
-        --target-lang="tgt" \
+        --source-lang="${SOURCE}" \
+        --target-lang="${TARGET}" \
         --seed="${SEED}" \
         --arch="${ARCH}" \
         --attention-dropout="${DROPOUT}" \
@@ -179,6 +155,7 @@ train_grid() {
 ###################
 
 generate() {
+    log "Generating..."
     local -r THIS_MODEL_DIR="$1"; shift
     local -r MODE="$1"; shift
     # Fairseq insists on calling the dev-set "valid"; hack around this.
@@ -189,8 +166,8 @@ generate() {
     # Makes raw predictions.
     fairseq-generate \
         "${OUT_DIR}" \
-        --source-lang="src" \
-        --target-lang="tgt" \
+        --source-lang="${SOURCE}" \
+        --target-lang="${TARGET}" \
         --path="${CHECKPOINT}" \
         --gen-subset="${FAIRSEQ_MODE}" \
         --beam="${BEAM}" \
@@ -207,6 +184,7 @@ generate() {
 }
 
 evaluate() {
+    log "Evaluating..."
     local -r THIS_MODEL_DIR="$1"; shift
     local -r MODE="$1"; shift
     # Applies the evaluation script to the TSV file.
