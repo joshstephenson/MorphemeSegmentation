@@ -208,8 +208,8 @@ vocab_grid() {
     for VOCAB in $(for i in $(seq 0 7); do echo $((93*(2**i))); done); do
         echo "Trying Vocab = ${VOCAB}"
         EXPERIMENT_DIR="./data/${LAN}/vocab-${VOCAB}"
-        preprocess "${EXPERIMENT_DIR}" $VOCAB
-        train_generate_evaluate "${EXPERIMENT_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
+        time preprocess "${EXPERIMENT_DIR}" $VOCAB
+        time train_generate_evaluate "${EXPERIMENT_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
     done
     exit
 }
