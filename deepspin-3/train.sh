@@ -16,12 +16,33 @@ echo "GRID LOC: ${GRID_LOC}"
 echo "INPUT PATH: ${DATASET}"
 echo "OUT DIR: ${OUT_DIR}"
 
+VOCAB_DIR="./data/${LAN}/vocab-exp"
+PREPROCESSED_DIR="${VOCAB_DIR}/in"
+OUT_DIR="${VOCAB_DIR}/out"
+RESULTS_DIR="${VOCAB_DIR}"
+MODEL_DIR="${VOCAB_DIR}/models"
+
 ###################
 # Preprocessing
 ###################
 
 preprocess() {
+    EXPERIMENT_DIR=$1; shift
+    VOCAB=$1; shift
+    if [ -z $VOCAB ]; then
+        >&2 echo "preprocess function needs 2 arguments: experiment directory and vocab size"
+        exit 1
+    fi
+    RESULTS_DIR="${EXPERIMENT_DIR}"
+    PREPROCESSED_DIR="${EXPERIMENT_DIR}/in"
+    OUT_DIR="${EXPERIMENT_DIR}/out"
+    MODEL_DIR="${EXPERIMENT_DIR}/models"
+    mkdir -p "${PREPROCESSED_DIR}"
+    mkdir -p "${OUT_DIR}"
+    mkdir -p "${MODEL_DIR}"
     log "Preprocessing..."
+    echo "EXPERIMENT DIR: ${EXPERIMENT_DIR}"
+    echo "VOCAB: $VOCAB"
     # Hack for Mongolian
     # Mongolian training set is in a sub-folder because it was a "surprise" language
     if [ "${LAN}" == "mon" ]; then
@@ -32,9 +53,12 @@ preprocess() {
 
     # Run sentencepiece tokenizer script
     # This is a key part of why the transformer works well
-    python tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir $OUT_DIR --split train $@
+    echo "${TRAIN_FILE}"
+    echo "${OUT_DIR}"
+    echo "${VOCAB}"
+    python tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${OUT_DIR}" --split train $@
     if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
-    python tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split dev --shared-data
+    python tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir "${OUT_DIR}" --split dev --shared-data
     if [ $? -ne 0 ]; then echo "Tokenizing dev failed" && exit 1 ; fi
     python tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
     if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
@@ -171,9 +195,9 @@ vocab_grid() {
     DROPOUT=0.1
     for VOCAB in 500 1000 2000 4000 8000 16000; do
         echo "Trying Vocab = ${VOCAB}"
-        THIS_MODEL_DIR="${GRID_LOC}/vocab-exp/${VOCAB}"
-        mkdir -p "${GRID_LOC}/vocab-exp/${VOCAB}"
-        train_generate_evaluate "${THIS_MODEL_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
+        EXPERIMENT_DIR="./data/${LAN}/vocab-${VOCAB}"
+        preprocess "${EXPERIMENT_DIR}" $VOCAB
+        train_generate_evaluate "${EXPERIMENT_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
     done
 }
 
@@ -231,10 +255,11 @@ evaluate() {
     fi
 }
 
+vocab_grid
+exit 0
 if [ "$(ls -A $OUT_DIR)" ]; then
     echo "PROCESSED DATA found in ${OUT_DIR}. Proceeding to training..."
-    #train_grid
-    vocab_grid
+    train_grid
 else
     preprocess
     if [ $? -ne 0 ]; then
@@ -242,7 +267,6 @@ else
         exit 1
     else
         echo "Data Processing succeeded. Proceeding to training."
-        #train_grid
-        vocab_grid
+        train_grid
     fi
 fi
