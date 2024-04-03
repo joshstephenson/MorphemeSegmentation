@@ -242,6 +242,7 @@ else
         exit 1
     else
         echo "Data Processing succeeded. Proceeding to training."
-        train_grid
+        #train_grid
+        vocab_grid
     fi
 fi
