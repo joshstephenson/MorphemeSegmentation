@@ -37,6 +37,12 @@ preprocess() {
     PREPROCESSED_DIR="${EXPERIMENT_DIR}/in"
     OUT_DIR="${EXPERIMENT_DIR}/out"
     MODEL_DIR="${EXPERIMENT_DIR}/models"
+    SOURCE_VOCAB="${OUT_DIR}/${SOURCE}.fairseq.vocab"
+    TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
+    if [ -f "${SOURCE_VOCAB}" ] && [ -f "${TARGET_VOCAB}" ]; then
+        echo "Looks like this configuration has already been preprocessed. Moving on..."
+        exit 0
+    fi
     mkdir -p "${PREPROCESSED_DIR}"
     mkdir -p "${OUT_DIR}"
     mkdir -p "${MODEL_DIR}"
@@ -63,8 +69,6 @@ preprocess() {
     python tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
     if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
 
-    SOURCE_VOCAB="${OUT_DIR}/${SOURCE}.fairseq.vocab"
-    TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
     tail -n +4 "${OUT_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
     tail -n +4 "${OUT_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
     #cd "${PREPROCESSED_DIR}"
