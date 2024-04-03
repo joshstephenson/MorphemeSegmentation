@@ -221,9 +221,9 @@ generate() {
     THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
     OUT_DIR="${EXPERIMENT_DIR}/out"
     CHECKPOINT="${THIS_MODEL_DIR}/checkpoint_best.pt"
-    OUT="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.out"
-    PRED="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.pred"
-    PREFIX="${EXPERIMENT_DIR}/${MODE}-${BEAM}"
+    PREFIX="${OUT_DIR}/${MODE}-${BEAM}"
+    OUT_FILE="${PREFIX}.out"
+    PRED_FILE="${PREFIX}.pred"
     GUESS_FILE="${PREFIX}.guess"
     # Makes raw predictions.
     fairseq-generate \
@@ -235,14 +235,12 @@ generate() {
         --beam="${BEAM}" \
         --alpha="${ENTMAX_ALPHA}" \
         --batch-size 256 \
-        > "${OUT}"
+        > "${OUT_FILE}"
     if [ $? -ne 0 ]; then
         echo "fairseq-train failed."
         exit 1
     fi
-    # Extracts the predictions into a TSV file.
-    cat "${OUT}" | grep -P '^H-'  | cut -c 3- | sort -n -k 1 | awk -F "\t" '{print $NF}' > $PRED
-    cut -f 1 $GOLD_FILE | paste - $PRED > "${GUESS_FILE}"
+    postprocess "${OUT_FILE}" "${GOLD_FILE}" "${PRED_FILE}" > "${GUESS_FILE}"
 }
 
 evaluate() {
