@@ -102,6 +102,11 @@ train() {
     local -r BATCH=$1; shift
     OUT_DIR="${EXPERIMENT_DIR}/out"
     THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
+    MODEL_FILE="${THIS_MODEL_DIR}/checkpoint_best.pt"
+    if [ -f "${MODEL_FILE}" ]; then
+        echo "Looks like model exists: ${MODEL_FILE}\nSkipping Training..."
+        return
+    fi
     log "Training\n\t Embeddings: ${EMB}\n\t Hidden: ${HID}\n\t Layers: ${LAYERS}\n\t Heads: ${HEADS}\n\t Warmup: ${WARMUP}\n\t Dropout: ${DROPOUT}\n\t Batch: ${BATCH}"
     fairseq-train \
         "${OUT_DIR}" \
