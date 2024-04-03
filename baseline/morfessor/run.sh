@@ -19,9 +19,9 @@ readonly MODEL_FILE="${OUT_DIR}/model.bin"
 readonly OUT_FILE="${OUT_DIR}/predictions.out"
 readonly GUESS_FILE="${OUT_DIR}/predictions.guess"
 readonly RESULTS_FILE="${OUT_DIR}/results.txt"
-readonly TRAIN_FILE="${OUT_DIR}/train.tmp"
-readonly VOCAB_FILE="${OUT_DIR}/vocab.tmp"
-readonly MORPH_FILE="${OUT_DIR}/morphs.tmp"
+readonly TRAIN_FILE="${IN_DIR}/${LAN}.word.train.tsv"
+readonly CORPUS_FILE="${OUT_DIR}/vocab.tmp"
+readonly ANNOTATIONS="${OUT_DIR}/morphs.tmp"
 readonly TEST_FILE="${OUT_DIR}/test.tmp"
 readonly GOLD_FILE="${IN_DIR}/${LAN}.word.test.gold.tsv"
 readonly EVAL_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
@@ -58,9 +58,9 @@ train() {
         echo "${MODEL_FILE} found. Skipping training..."
     else
         echo "Training..."
-        cut -f 1 $TRAIN_FILE | sed -e 's/ /_/g' > $VOCAB_FILE
-        cut -f 1,2 $TRAIN | sed "s/ @@/‖/g" | sed "s/ /_/g" | sed "s/\t/ /g" | sed "s/‖/ /g" > $MORPH_FILE
-        morfessor-train $VOCAB_FILE -s $MODEL_FILE -A $MORPH_FILE
+        cut -f 1 $TRAIN_FILE | sed -e 's/ /_/g' > $CORPUS_FILE
+        cut -f 1,2 $TRAIN_FILE | sed "s/ @@/‖/g"  | sed "s/ /_/g" | sed "s/‖/ /g" > "${ANNOTATIONS}"
+        morfessor-train $CORPUS_FILE -s $MODEL_FILE -A $ANNOTATIONS
     fi
 }
 
