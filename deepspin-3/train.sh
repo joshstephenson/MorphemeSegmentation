@@ -104,7 +104,8 @@ train() {
     THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
     MODEL_FILE="${THIS_MODEL_DIR}/checkpoint_best.pt"
     if [ -f "${MODEL_FILE}" ]; then
-        echo "Looks like model exists: ${MODEL_FILE}\nSkipping Training..."
+        log "Looks like model exists: ${MODEL_FILE}"
+        echo "Skipping Training..."
         return
     fi
     log "Training\n\t Embeddings: ${EMB}\n\t Hidden: ${HID}\n\t Layers: ${LAYERS}\n\t Heads: ${HEADS}\n\t Warmup: ${WARMUP}\n\t Dropout: ${DROPOUT}\n\t Batch: ${BATCH}"
@@ -204,7 +205,7 @@ vocab_grid() {
     HEADS=8
     WARMUP=4000
     DROPOUT=0.1
-    for VOCAB in 500 1000 2000 4000 8000 16000; do
+    for VOCAB in 100 500 1000 2000 4000 8000 16000; do
         echo "Trying Vocab = ${VOCAB}"
         EXPERIMENT_DIR="./data/${LAN}/vocab-${VOCAB}"
         preprocess "${EXPERIMENT_DIR}" $VOCAB
@@ -222,7 +223,6 @@ train_grid() {
 ###################
 
 generate() {
-    log "Generating..."
     local -r EXPERIMENT_DIR="$1"; shift
     local -r MODE="$1"; shift
     # Fairseq insists on calling the dev-set "valid"; hack around this.
@@ -234,6 +234,12 @@ generate() {
     OUT_FILE="${PREFIX}.out"
     PRED_FILE="${PREFIX}.pred"
     GUESS_FILE="${PREFIX}.guess"
+    if [ -f "${OUT_FILE}" ]; then
+        log "Looks like this configuration has already been generated"
+        echo "Skipping generation..."
+        return
+    fi
+    log "Generating..."
     # Makes raw predictions.
     fairseq-generate \
         "${OUT_DIR}" \
@@ -258,7 +264,8 @@ evaluate() {
     local -r MODE="$1"; shift
     THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
     # Applies the evaluation script to the TSV file.
-    PREFIX="${EXPERIMENT_DIR}/${MODE}-${BEAM}"
+    OUT_DIR="${EXPERIMENT_DIR}/out"
+    PREFIX="${OUT_DIR}/${MODE}-${BEAM}"
     GUESS_FILE="${PREFIX}.guess"
     RESULTS_FILE="${PREFIX}.results"
     python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS_FILE}" > "${RESULTS_FILE}"
