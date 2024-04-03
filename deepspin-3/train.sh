@@ -234,28 +234,31 @@ generate() {
     OUT_FILE="${PREFIX}.out"
     PRED_FILE="${PREFIX}.pred"
     GUESS_FILE="${PREFIX}.guess"
-    if [ -f "${OUT_FILE}" ]; then
+    if [ ! -f "${OUT_FILE}" ]; then
+        log "Generating predictions..."
+        # Makes raw predictions.
+        fairseq-generate \
+            "${OUT_DIR}" \
+            --source-lang="${SOURCE}" \
+            --target-lang="${TARGET}" \
+            --path="${CHECKPOINT}" \
+            --gen-subset="${FAIRSEQ_MODE}" \
+            --beam="${BEAM}" \
+            --alpha="${ENTMAX_ALPHA}" \
+            --batch-size 256 \
+            > "${OUT_FILE}"
+        if [ $? -ne 0 ]; then
+            echo "fairseq-train failed."
+            exit 1
+        fi
+    else
         log "Looks like this configuration has already been generated"
         echo "Skipping generation..."
-        return
     fi
-    log "Generating..."
-    # Makes raw predictions.
-    fairseq-generate \
-        "${OUT_DIR}" \
-        --source-lang="${SOURCE}" \
-        --target-lang="${TARGET}" \
-        --path="${CHECKPOINT}" \
-        --gen-subset="${FAIRSEQ_MODE}" \
-        --beam="${BEAM}" \
-        --alpha="${ENTMAX_ALPHA}" \
-        --batch-size 256 \
-        > "${OUT_FILE}"
-    if [ $? -ne 0 ]; then
-        echo "fairseq-train failed."
-        exit 1
+    if [ ! -f "${GUESS_FILE}" ]; then
+        log "Postprocessing..."
+        postprocess "${OUT_FILE}" "${GOLD_FILE}" "${PRED_FILE}" "${GUESS_FILE}"
     fi
-    postprocess "${OUT_FILE}" "${GOLD_FILE}" "${PRED_FILE}" > "${GUESS_FILE}"
 }
 
 evaluate() {
