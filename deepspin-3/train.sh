@@ -255,7 +255,7 @@ evaluate() {
     GUESS_FILE="${PREFIX}.guess"
     RESULTS_FILE="${PREFIX}.results"
     python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS_FILE}" > "${RESULTS_FILE}"
-    if [ $? -ne 0 ]; then
+    if [ $? -eq 0 ]; then
         cat "${RESULTS_FILE}"
     else
         echo "Failed to evaluate model."
