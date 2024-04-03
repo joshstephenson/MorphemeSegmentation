@@ -8,76 +8,6 @@ from config import Config
 from torch.utils.tensorboard import SummaryWriter
 
 
-class PlateauWithEarlyStopping:
-    """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, optimizer):
-        """
-        Args:
-            patience (int): How long to wait after last time validation loss improved.
-                            Default: 7
-            verbose (bool): If True, prints a message for each validation loss improvement.
-                            Default: False
-            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
-                            Default: 0
-            path (str): Path for the checkpoint to be saved to.
-                            Default: 'checkpoint.pt'
-            trace_func (function): trace print function.
-                            Default: print
-        """
-        self.optimizer = optimizer
-        self.patience = config['training']['patience']
-        self.counter = 0
-        self.best_score = np.Inf
-        self.early_stop = False
-        self.val_loss_min = np.Inf
-        self.delta = 0.5
-        self.min_lr = float(config['training']['learning_rate_min'])
-        self.current_lr = float(config['training']['learning_rate'])
-        self.step_factor = float(config['training']['learning_rate_factor'])
-    def __call__(self, val_loss, model):
-        if not config['training']['early_stopping']:
-            return
-        score = val_loss
-
-        if score < self.best_score - self.delta:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-            self.counter = 0 # reset the counter if we find a new best loss
-        # elif self.current_lr > self.min_lr:
-        #     self.set_learning_rate(self.current_lr * self.step_factor)
-        else: # Now check for early stopping
-            self.counter += 1
-            logger.info(f'Early stopping counter: {self.counter} out of {self.patience}')
-            if self.counter >= self.patience:
-                self.early_stop = True
-
-    def set_learning_rate(self, new_lr):
-        new_lr = max(self.min_lr, new_lr)
-        for g in self.optimizer.param_groups:
-            g['lr'] = new_lr
-        self.current_lr = new_lr
-        logger.info(f'Learning rate set to: {self.current_lr}')
-
-        # if self.best_score is None:
-        #     self.best_score = score
-        #     self.save_checkpoint(val_loss, model)
-        # elif score < self.best_score + self.delta:
-        #     self.counter += 1
-        #     self.trace_func(f'Early stopping counter: {self.counter} out of {self.patience}')
-        #     if self.counter >= self.patience:
-        #         self.early_stop = True
-        # else:
-        #     self.best_score = score
-        #     self.save_checkpoint(val_loss, model)
-        #     self.counter = 0
-
-    def save_checkpoint(self, val_loss, model):
-        '''Saves model when validation loss decrease.'''
-        logger.info(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        model.save()
-        self.val_loss_min = val_loss
-
-
 class Trainer():
     def __init__(self, dropout):
         self.config = Config()
@@ -92,7 +22,6 @@ class Trainer():
         self.criterion = self.config.criterion(self.data.train.pad_index)
 
     def run(self):
-        early_stopping = PlateauWithEarlyStopping(self.optimizer)
         writer = SummaryWriter()
         num_trainable_params = sum([p.numel() for p in self.model.parameters()])
         logger.info(f'Trainable params: {num_trainable_params}')
@@ -115,12 +44,8 @@ class Trainer():
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
             # Nothing will occur here if early_stopping is False in config.yaml
-            early_stopping(valid_loss, self.model)
-            if early_stopping.early_stop:
-                self.model.load_from_file(self.model.model_file) # reload the lowest valid loss checkpoint
-                logger.info(f"Stopping early after {i} epochs.")
-                break
         writer.close()
+        self.model.save()
         logger.info(f'Model saved to: {self.model.model_file}')
 
     def _train(self, epoch, writer):

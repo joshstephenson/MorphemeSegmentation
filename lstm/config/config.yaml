@@ -26,7 +26,7 @@ training:
   learning_rate: 0.001 # This is the initial learning rate
   learning_rate_min: 0.0001
   learning_rate_factor: 0.1
-  epochs: 6 # training should be stopped by early stopping before this number
+  epochs: 1 # training should be stopped by early stopping before this number
   teacher_forcing_ratio: 0.5
   clip: 1.0
   loss_criterion: crossentropy
