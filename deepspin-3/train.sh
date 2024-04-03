@@ -41,7 +41,7 @@ preprocess() {
     TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
     if [ -f "${SOURCE_VOCAB}" ] && [ -f "${TARGET_VOCAB}" ]; then
         echo "Looks like this configuration has already been preprocessed. Moving on..."
-        exit 0
+        return
     fi
     mkdir -p "${PREPROCESSED_DIR}"
     mkdir -p "${OUT_DIR}"
