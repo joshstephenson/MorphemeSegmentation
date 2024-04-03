@@ -219,9 +219,12 @@ generate() {
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     local -r FAIRSEQ_MODE="${MODE/dev/valid}"
     THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
+    OUT_DIR="${EXPERIMENT_DIR}/out"
     CHECKPOINT="${THIS_MODEL_DIR}/checkpoint_best.pt"
     OUT="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.out"
     PRED="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.pred"
+    PREFIX="${EXPERIMENT_DIR}/${MODE}-${BEAM}"
+    GUESS_FILE="${PREFIX}.guess"
     # Makes raw predictions.
     fairseq-generate \
         "${OUT_DIR}" \
@@ -239,7 +242,7 @@ generate() {
     fi
     # Extracts the predictions into a TSV file.
     cat "${OUT}" | grep -P '^H-'  | cut -c 3- | sort -n -k 1 | awk -F "\t" '{print $NF}' > $PRED
-    cut -f 1 $GOLD_FILE | paste - $PRED > "${THIS_MODEL_DIR}/${MODE}-${BEAM}.guess"
+    cut -f 1 $GOLD_FILE | paste - $PRED > "${GUESS_FILE}"
 }
 
 evaluate() {
