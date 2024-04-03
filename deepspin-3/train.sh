@@ -15,7 +15,6 @@ echo "GOLD PATH: ${GOLD_FILE}"
 echo "GRID LOC: ${GRID_LOC}"
 echo "INPUT PATH: ${DATASET}"
 echo "OUT DIR: ${OUT_DIR}"
-echo "VOCAB: ${VOCAB}"
 
 ###################
 # Preprocessing
@@ -119,6 +118,34 @@ train() {
         exit 1
     fi
 }
+
+train_generate_evaluate() {
+    local -r THIS_MODEL_DIR=$1
+    local -r EMB=$2
+    local -r HID=$3
+    local -r LAYERS=$4
+    local -r HEADS=$5
+    local -r WARMUP=$6
+    local -r DROPOUT=$7
+    local -r BATCH=$8
+    if [ -z "${THIS_MODEL_DIR}" ]
+    then
+        echo "train_generate_evaluate must receive a model directory argument"
+        exit 1
+    fi
+    FILENAME="${THIS_MODEL_DIR}/dev-5.results"
+    if [ -f "$FILENAME" ]
+    then
+        echo "Results file ${FILENAME} found. Not re-running."
+        cat "${FILENAME}"
+    else
+        train $THIS_MODEL_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
+        generate $THIS_MODEL_DIR test
+        evaluate $THIS_MODEL_DIR test
+        echo "Trained data written to: ${FILENAME}"
+    fi
+}
+
 grid() {
     local -r EMB="$1"; shift
     local -r HID="$1"; shift
@@ -129,19 +156,24 @@ grid() {
             for BATCH in $BATCHES ; do
                 THIS_MODEL_DIR="${GRID_LOC}/${LAN}-entmax-minloss-${EMB}-${HID}-${LAYERS}-${HEADS}-${BATCH}-${ENTMAX_ALPHA}-${LR}-${WARMUP}-${DROPOUT}"
                 mkdir -p "${THIS_MODEL_DIR}"
-                FILENAME="${THIS_MODEL_DIR}/dev-5.results"
-                if [ ! -f "$FILENAME" ]
-                then
-                    train $THIS_MODEL_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
-                    generate $THIS_MODEL_DIR test
-                    evaluate $THIS_MODEL_DIR test
-                    echo "Trained data written to: ${FILENAME}"
-                else
-                    echo "Results file ${FILENAME} found. Not re-running."
-                    cat "${FILENAME}"
-                fi
+                train_generate_evaluate "${THIS_MODEL_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
             done
         done
+    done
+}
+
+vocab_grid() {
+    EMB=256
+    HID=1024
+    LAYERS=6
+    HEADS=8
+    WARMUP=4000
+    DROPOUT=0.1
+    for VOCAB in 500 1000 2000 4000 8000 16000; do
+        echo "Trying Vocab = ${VOCAB}"
+        THIS_MODEL_DIR="${GRID_LOC}/vocab-exp/${VOCAB}"
+        mkdir -p "${GRID_LOC}/vocab-exp/${VOCAB}"
+        train_generate_evaluate "${THIS_MODEL_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
     done
 }
 
@@ -201,7 +233,8 @@ evaluate() {
 
 if [ "$(ls -A $OUT_DIR)" ]; then
     echo "PROCESSED DATA found in ${OUT_DIR}. Proceeding to training..."
-    train_grid
+    #train_grid
+    vocab_grid
 else
     preprocess
     if [ $? -ne 0 ]; then
