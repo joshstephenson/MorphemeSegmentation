@@ -88,7 +88,7 @@ preprocess() {
 
 train() {
     # PARAMS: $THIS_MODEL_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
-    local -r THIS_MODEL_DIR=$1; shift
+    local -r EXPERIMENT_DIR=$1; shift
     local -r EMB=$1; shift
     local -r HID=$1; shift
     local -r LAYERS=$1; shift
@@ -96,6 +96,8 @@ train() {
     local -r WARMUP=$1; shift
     local -r DROPOUT=$1; shift
     local -r BATCH=$1; shift
+    OUT_DIR="${EXPERIMENT_DIR}/out"
+    THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
     log "Training\n\t Embeddings: ${EMB}\n\t Hidden: ${HID}\n\t Layers: ${LAYERS}\n\t Heads: ${HEADS}\n\t Warmup: ${WARMUP}\n\t Dropout: ${DROPOUT}\n\t Batch: ${BATCH}"
     fairseq-train \
         "${OUT_DIR}" \
@@ -144,7 +146,7 @@ train() {
 }
 
 train_generate_evaluate() {
-    local -r THIS_MODEL_DIR=$1
+    local -r EXPERIMENT_DIR=$1
     local -r EMB=$2
     local -r HID=$3
     local -r LAYERS=$4
@@ -152,20 +154,20 @@ train_generate_evaluate() {
     local -r WARMUP=$6
     local -r DROPOUT=$7
     local -r BATCH=$8
-    if [ -z "${THIS_MODEL_DIR}" ]
+    if [ -z "${EXPERIMENT_DIR}" ]
     then
         echo "train_generate_evaluate must receive a model directory argument"
         exit 1
     fi
-    FILENAME="${THIS_MODEL_DIR}/dev-5.results"
+    FILENAME="${EXPERIMENT_DIR}/dev-5.results"
     if [ -f "$FILENAME" ]
     then
         echo "Results file ${FILENAME} found. Not re-running."
         cat "${FILENAME}"
     else
-        train $THIS_MODEL_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
-        generate $THIS_MODEL_DIR test
-        evaluate $THIS_MODEL_DIR test
+        train $EXPERIMENT_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
+        generate $EXPERIMENT_DIR test
+        evaluate $EXPERIMENT_DIR test
         echo "Trained data written to: ${FILENAME}"
     fi
 }
@@ -212,10 +214,11 @@ train_grid() {
 
 generate() {
     log "Generating..."
-    local -r THIS_MODEL_DIR="$1"; shift
+    local -r EXPERIMENT_DIR="$1"; shift
     local -r MODE="$1"; shift
     # Fairseq insists on calling the dev-set "valid"; hack around this.
     local -r FAIRSEQ_MODE="${MODE/dev/valid}"
+    THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
     CHECKPOINT="${THIS_MODEL_DIR}/checkpoint_best.pt"
     OUT="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.out"
     PRED="${THIS_MODEL_DIR}/${MODE}-${BEAM}.subwords.pred"
@@ -241,11 +244,12 @@ generate() {
 
 evaluate() {
     log "Evaluating..."
-    local -r THIS_MODEL_DIR="$1"; shift
+    local -r EXPERIMENT_DIR="$1"; shift
     local -r MODE="$1"; shift
+    THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
     # Applies the evaluation script to the TSV file.
-    PREFIX="${THIS_MODEL_DIR}/${MODE}-${BEAM}"
-    RESULTS_FILE="${PREFIX}.guess"
+    PREFIX="${EXPERIMENT_DIR}/${MODE}-${BEAM}"
+    GUESS_FILE="${PREFIX}.guess"
     RESULTS_FILE="${PREFIX}.results"
     python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS_FILE}" > "${RESULTS_FILE}"
     if [ $? -ne 0 ]; then
