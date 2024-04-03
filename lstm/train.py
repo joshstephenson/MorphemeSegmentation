@@ -46,7 +46,6 @@ class Trainer():
             # Nothing will occur here if early_stopping is False in config.yaml
         writer.close()
         self.model.save()
-        logger.info(f'Model saved to: {self.model.model_file}')
 
     def _train(self, epoch, writer):
         kwargs = self.config['training']
