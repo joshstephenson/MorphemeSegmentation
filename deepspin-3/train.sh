@@ -103,7 +103,7 @@ train() {
     OUT_DIR="${EXPERIMENT_DIR}/out"
     THIS_MODEL_DIR="${EXPERIMENT_DIR}/models"
     MODEL_FILE="${THIS_MODEL_DIR}/checkpoint_best.pt"
-    if [ -f "${MODEL_FILE}" ]; then
+    if [ -s "${MODEL_FILE}" ]; then
         log "Looks like model exists: ${MODEL_FILE}"
         echo "Skipping Training..."
         return
@@ -170,7 +170,7 @@ train_generate_evaluate() {
         exit 1
     fi
     FILENAME="${EXPERIMENT_DIR}/dev-5.results"
-    if [ -f "$FILENAME" ]
+    if [ -s "$FILENAME" ]
     then
         echo "Results file ${FILENAME} found. Not re-running."
         cat "${FILENAME}"
@@ -247,7 +247,7 @@ generate() {
     OUT_FILE="${PREFIX}.out"
     PRED_FILE="${PREFIX}.pred"
     GUESS_FILE="${PREFIX}.guess"
-    if [ ! -f "${OUT_FILE}" ]; then
+    if [ ! -s "${OUT_FILE}" ]; then
         log "Generating predictions..."
         # Makes raw predictions.
         fairseq-generate \
