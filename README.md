@@ -11,8 +11,8 @@ This repository is organized as such:
 baseline/
 baseline/bert       # simple BertTokenizer generator and evaluator
 baseline/morfessor  # simple Morfessor 2.0 trainer, generator, and evaluator
-deepspin-2          # streamlined implementation of DeepSpin-2, written by [Ben Peters](https://github.com/bpopeters), using fairseq and an LSTM architecture
-deepspin-3          # streamlined implementation of DeepSpin-3, written by [Ben Peters](https://github.com/bpopeters), using fairseq and a transformer architecture
+deepspin-2          # streamlined implementation of DeepSpin-2 with fairseq and an LSTM architecture
+deepspin-3          # streamlined implementation of DeepSpin-3 with fairseq and a transformer architecture
 lstm                # an LSTM architecture not built on fairseq (for academic purposes)
 ```
 
