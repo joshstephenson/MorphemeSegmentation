@@ -32,7 +32,7 @@ fülésztől	fül @@ész @@től	110
 After training, the model is expected to be able to receive just the first column (the untokenized word) and be able to separate it into morphemes, with the ` @@` morpheme separator. The final column, which can be used for training has 3 bits that represent the types of morphology (inflection, derivation, & compounding).
 
 ### Setup
-- Make sure to clone this with `--recuse-submodules` to ensure you get the data from the competition.
+- Make sure to clone this with `--recurse-submodules` to ensure you get the data from the competition.
 - After creating a virtual environment with `python -m venv <name>`, you can install necessary python libraries with `pip install -r requirements.txt` from the root directory of this repository.
 
 ### Configuration
