@@ -39,7 +39,7 @@ readonly ENTMAX_ALPHA=1.5
 readonly OPTIMIZER=adam
 readonly LR=0.001
 readonly CLIP_NORM=1.
-VOCAB=500 # No longer unexplored. Experiment for Hungarian showed that 200 is plenty.
+VOCAB=6000 # No longer unexplored. Experiment for Hungarian showed that 200 is plenty.
 
 mkdir -p "$PREPROCESSED_DIR"
 mkdir -p "$OUT_DIR"
