@@ -265,7 +265,7 @@ generate() {
             exit 1
         fi
     else
-        log "Looks like this configuration has already been generated"
+        log "Looks like this configuration has already been generated: ${OUT_FILE}"
         echo "Skipping generation..."
     fi
     if [ ! -f "${GUESS_FILE}" ]; then
