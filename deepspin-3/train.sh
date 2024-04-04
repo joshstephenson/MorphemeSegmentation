@@ -62,11 +62,11 @@ preprocess() {
     echo "${TRAIN_FILE}"
     echo "${OUT_DIR}"
     echo "${VOCAB}"
-    python tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${OUT_DIR}" --split train $@
+    python ../tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${OUT_DIR}" --split train $@
     if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
-    python tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir "${OUT_DIR}" --split dev --shared-data
+    python ../tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir "${OUT_DIR}" --split dev --shared-data
     if [ $? -ne 0 ]; then echo "Tokenizing dev failed" && exit 1 ; fi
-    python tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
+    python ../tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
     if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
 
     tail -n +4 "${OUT_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
