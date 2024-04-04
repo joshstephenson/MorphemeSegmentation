@@ -34,3 +34,18 @@ Results from `generate_all_langs.sh`:
 |Mongolian|5.27|
 |Russian|13.81|
 |Spanish|16.57|
+
+Example of Bert Tokenization versus correct morphological segmentation for Hungarian:
+|Word|BERT|Morphological|
+|----|----|---------|
+|pöfetegből|p @@öfe @@teg @@ből|pöfeteg @@ből|
+|pleonazmus|pl @@eon @@az @@mus|pleonazmus|
+|világháborúsakban|világháború @@sak @@ban|világ @@háború @@s @@ak @@ban|
+|lugashoz|lu @@gas @@hoz|lugas @@hoz|
+|Fokvárosra|F @@ok @@város @@ra|fok @@vár @@os @@ra|
+|faljátok|fa @@lj @@át @@ok|fal @@játok|
+|ászanáké|ás @@zan @@ák @@é|ászana @@k @@é|
+|kirakata|kira @@kata|ki @@rak @@at @@a|
+|kopoltyúkat|kop @@olt @@y @@ú @@kat|kopoltyú @@k @@at|
+|közösségeké|közös @@ségek @@é|köz @@ös @@ség @@ek @@é|
+
