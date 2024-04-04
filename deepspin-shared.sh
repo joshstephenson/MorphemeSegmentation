@@ -181,8 +181,10 @@ preprocess() {
     TXT_FILE1="${PREPROCESSED_DIR}/dict.${SOURCE}.txt"
     TXT_FILE2="${PREPROCESSED_DIR}/dict.${TARGET}.txt"
     if [ -f "${TXT_FILE1}" ] || [ -f "${TXT_FILE2}" ] ; then
-        echo "Removing previously processed files"
-        rm "${TXT_FILE1}" "${TXT_FILE2}" > /dev/null 2>&1
+        echo "Previously preprocessed files found: ${TXT_FILE1} ${TXT_FILE2}"
+        echo "Remove them if you wish to re-preprocess. Skipping for now..."
+        return 0
+        #rm "${TXT_FILE1}" "${TXT_FILE2}" > /dev/null 2>&1
     fi
 
 #    pushd . # save whatever directory we are currently in

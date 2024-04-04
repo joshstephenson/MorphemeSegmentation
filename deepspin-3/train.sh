@@ -251,7 +251,7 @@ generate() {
         log "Generating predictions..."
         # Makes raw predictions.
         fairseq-generate \
-            "${OUT_DIR}" \
+            "${OUT_FILE}" \
             --source-lang="${SOURCE}" \
             --target-lang="${TARGET}" \
             --path="${CHECKPOINT}" \
