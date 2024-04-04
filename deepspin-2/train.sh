@@ -23,110 +23,110 @@ fi
 # Preprocessing
 ###################
 
-preprocess() {
-    EXPERIMENT_DIR=$1; shift
-    VOCAB=$1; shift
-    if [ -z $VOCAB ]; then
-        >&2 echo "preprocess function needs 2 arguments: experiment directory and vocab size"
-        exit 1
-    fi
-    RESULTS_DIR="${EXPERIMENT_DIR}"
-    PREPROCESSED_DIR="${EXPERIMENT_DIR}/in"
-    OUT_DIR="${EXPERIMENT_DIR}/out"
-    MODEL_DIR="${EXPERIMENT_DIR}/models"
-    SOURCE_VOCAB="${OUT_DIR}/${SOURCE}.fairseq.vocab"
-    TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
-    if [ -f "${SOURCE_VOCAB}" ] && [ -f "${TARGET_VOCAB}" ]; then
-        echo "Looks like this configuration has already been preprocessed. Moving on..."
-        return
-    fi
-    mkdir -p "${PREPROCESSED_DIR}"
-    mkdir -p "${OUT_DIR}"
-    mkdir -p "${MODEL_DIR}"
-    log "Preprocessing..."
-    echo "EXPERIMENT DIR: ${EXPERIMENT_DIR}"
-    echo "VOCAB: $VOCAB"
-    # Hack for Mongolian
-    # Mongolian training set is in a sub-folder because it was a "surprise" language
-    if [ "${LAN}" == "mon" ]; then
-        DATASET2="${IN_DIR}/surprise/${LAN}.word"
-        TRAIN_FILE="${DATASET2}.train.tsv"
-        DEV_FILE="${DATASET2}.dev.tsv"
-    fi
-
-    # Run sentencepiece tokenizer script
-    # This is a key part of why the transformer works well
-    echo "${TRAIN_FILE}"
-    echo "${OUT_DIR}"
-    echo "${VOCAB}"
-    python ../tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${OUT_DIR}" --split train $@
-    if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
-    python ../tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir "${OUT_DIR}" --split dev --shared-data
-    if [ $? -ne 0 ]; then echo "Tokenizing dev failed" && exit 1 ; fi
-    python ../tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
-    if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
-
-    tail -n +4 "${OUT_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
-    tail -n +4 "${OUT_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
-    #cd "${PREPROCESSED_DIR}"
-    fairseq-preprocess \
-        --source-lang="${SOURCE}" \
-        --target-lang="${TARGET}" \
-        --trainpref="${OUT_DIR}/train" \
-        --validpref="${OUT_DIR}/dev" \
-        --testpref="${OUT_DIR}/test" \
-        --tokenizer=space \
-        --thresholdsrc=1 \
-        --thresholdtgt=1 \
-        --srcdict "${SOURCE_VOCAB}" \
-        --tgtdict "${TARGET_VOCAB}" \
-        --destdir="${OUT_DIR}"
-}
 #preprocess() {
+#    EXPERIMENT_DIR=$1; shift
+#    VOCAB=$1; shift
+#    if [ -z $VOCAB ]; then
+#        >&2 echo "preprocess function needs 2 arguments: experiment directory and vocab size"
+#        exit 1
+#    fi
+#    RESULTS_DIR="${EXPERIMENT_DIR}"
+#    PREPROCESSED_DIR="${EXPERIMENT_DIR}/in"
+#    OUT_DIR="${EXPERIMENT_DIR}/out"
+#    MODEL_DIR="${EXPERIMENT_DIR}/models"
+#    SOURCE_VOCAB="${OUT_DIR}/${SOURCE}.fairseq.vocab"
+#    TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
+#    if [ -f "${SOURCE_VOCAB}" ] && [ -f "${TARGET_VOCAB}" ]; then
+#        echo "Looks like this configuration has already been preprocessed. Moving on..."
+#        return
+#    fi
+#    mkdir -p "${PREPROCESSED_DIR}"
+#    mkdir -p "${OUT_DIR}"
+#    mkdir -p "${MODEL_DIR}"
 #    log "Preprocessing..."
-#    if [ -f "${DICT_FILE}" ]; then
-#        echo "Files already preprocessed. Moving on."
-#        cd "${PREPROCESSED_DIR}"
-#        return 0
-#    fi
-#    for TASK in "train" "dev" "test.gold" ; do
-#        for FILE in "${DATASET}.${TASK}.tsv"; do
-#            SOURCE_FILE="${PREPROCESSED_DIR}/${TASK}.${SOURCE}"
-#            TARGET_FILE="${PREPROCESSED_DIR}/${TASK}.${TARGET}"
-#            # Segment the source strings by separating each grapheme (char)
-#            cut -f 1 "${FILE}" | sed 's/./& /g' > "${SOURCE_FILE}"
-#            # Segment the target strings by separating each morph
-#            # Change morph separator to single @ and spaces to underscores
-#            cut -f 2 "${FILE}" | sed 's/@@/|/g' > "${TARGET_FILE}"
-#            echo "Created files: ${SOURCE_FILE} and ${TARGET_FILE}"
-#        done
-#    done
-#
-#    echo "Moving on to fairseq-preprocess"
-#
-#    # REMOVE previously preprocessed files or fairseq will exit 1
-#    TXT_FILE1="${OUT_DIR}/dict.${SOURCE}.txt"
-#    TXT_FILE2="${OUT_DIR}/dict.${TARGET}.txt"
-#    if [ -f "${TXT_FILE1}" ] || [ -f "${TXT_FILE2}" ] ; then
-#        echo "Removing previously processed files"
-#        rm "${TXT_FILE1}" "${TXT_FILE2}" > /dev/null 2>&1
+#    echo "EXPERIMENT DIR: ${EXPERIMENT_DIR}"
+#    echo "VOCAB: $VOCAB"
+#    # Hack for Mongolian
+#    # Mongolian training set is in a sub-folder because it was a "surprise" language
+#    if [ "${LAN}" == "mon" ]; then
+#        DATASET2="${IN_DIR}/surprise/${LAN}.word"
+#        TRAIN_FILE="${DATASET2}.train.tsv"
+#        DEV_FILE="${DATASET2}.dev.tsv"
 #    fi
 #
-#    cd "${PREPROCESSED_DIR}"
+#    # Run sentencepiece tokenizer script
+#    # This is a key part of why the transformer works well
+#    echo "${TRAIN_FILE}"
+#    echo "${OUT_DIR}"
+#    echo "${VOCAB}"
+#    python ../tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${OUT_DIR}" --split train $@
+#    if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
+#    python ../tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir "${OUT_DIR}" --split dev --shared-data
+#    if [ $? -ne 0 ]; then echo "Tokenizing dev failed" && exit 1 ; fi
+#    python ../tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
+#    if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
+#
+#    tail -n +4 "${OUT_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
+#    tail -n +4 "${OUT_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
+#    #cd "${PREPROCESSED_DIR}"
 #    fairseq-preprocess \
 #        --source-lang="${SOURCE}" \
 #        --target-lang="${TARGET}" \
-#        --trainpref=train \
-#        --validpref=dev \
-#        --testpref=test.gold \
+#        --trainpref="${OUT_DIR}/train" \
+#        --validpref="${OUT_DIR}/dev" \
+#        --testpref="${OUT_DIR}/test" \
 #        --tokenizer=space \
 #        --thresholdsrc=1 \
 #        --thresholdtgt=1 \
-#        --destdir="../../${LAN}/out"
+#        --srcdict "${SOURCE_VOCAB}" \
+#        --tgtdict "${TARGET_VOCAB}" \
+#        --destdir="${OUT_DIR}"
 #}
+preprocess() {
+    log "Preprocessing..."
+    if [ -f "${DICT_FILE}" ]; then
+        echo "Files already preprocessed. Moving on."
+        cd "${PREPROCESSED_DIR}"
+        return 0
+    fi
+    for TASK in "train" "dev" "test.gold" ; do
+        for FILE in "${DATASET}.${TASK}.tsv"; do
+            SOURCE_FILE="${PREPROCESSED_DIR}/${TASK}.${SOURCE}"
+            TARGET_FILE="${PREPROCESSED_DIR}/${TASK}.${TARGET}"
+            # Segment the source strings by separating each grapheme (char)
+            cut -f 1 "${FILE}" | sed 's/./& /g' > "${SOURCE_FILE}"
+            # Segment the target strings by separating each morph
+            # Change morph separator to single @ and spaces to underscores
+            cut -f 2 "${FILE}" | sed 's/@@/|/g' > "${TARGET_FILE}"
+            echo "Created files: ${SOURCE_FILE} and ${TARGET_FILE}"
+        done
+    done
+
+    echo "Moving on to fairseq-preprocess"
+
+    # REMOVE previously preprocessed files or fairseq will exit 1
+    TXT_FILE1="${OUT_DIR}/dict.${SOURCE}.txt"
+    TXT_FILE2="${OUT_DIR}/dict.${TARGET}.txt"
+    if [ -f "${TXT_FILE1}" ] || [ -f "${TXT_FILE2}" ] ; then
+        echo "Removing previously processed files"
+        rm "${TXT_FILE1}" "${TXT_FILE2}" > /dev/null 2>&1
+    fi
+
+    cd "${PREPROCESSED_DIR}"
+    fairseq-preprocess \
+        --source-lang="${SOURCE}" \
+        --target-lang="${TARGET}" \
+        --trainpref=train \
+        --validpref=dev \
+        --testpref=test.gold \
+        --tokenizer=space \
+        --thresholdsrc=1 \
+        --thresholdtgt=1 \
+        --destdir="../../${LAN}/out"
+}
 
 train() {
-    #cd ../../..
+    cd ../../..
     get_checkpoint
     if [ -f "${CHECKPOINT}" ]; then
         log "Checkpount found: ${CHECKPOINT}\nProceeding..."
