@@ -4,6 +4,11 @@ To train, segment and evaluate use:
 ./train.sh <language code>
 ```
 
+The default tokenization for this project is character level. To use subword level with a vocab size of 6000, set the following environment variable:
+```
+SUBWORDS=1 ./train.sh <language code>
+```
+
 Language options include:
 | Language | Language code |
 |----------|---------------|
