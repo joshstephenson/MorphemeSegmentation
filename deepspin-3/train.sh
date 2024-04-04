@@ -110,7 +110,7 @@ train() {
     fi
     log "Training\n\t Embeddings: ${EMB}\n\t Hidden: ${HID}\n\t Layers: ${LAYERS}\n\t Heads: ${HEADS}\n\t Warmup: ${WARMUP}\n\t Dropout: ${DROPOUT}\n\t Batch: ${BATCH}"
     fairseq-train \
-        "${OUT_DIR}" \
+        "${PREPROCESSED_DIR}" \
         --save-dir="${THIS_MODEL_DIR}" \
         --source-lang="${SOURCE}" \
         --target-lang="${TARGET}" \
