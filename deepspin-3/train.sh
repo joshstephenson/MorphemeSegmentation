@@ -222,8 +222,8 @@ simple_train() {
     DROPOUT=0.1
     VOCAB=500
     EXPERIMENT_DIR="./data/${LAN}"
-    preprocess "${EXPERIMENT_DIR}" $VOCAB
-    train_generate_evaluate "${EXPERIMENT_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
+    time preprocess "${EXPERIMENT_DIR}" $VOCAB
+    time train_generate_evaluate "${EXPERIMENT_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
 }
 
 train_grid() {
