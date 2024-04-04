@@ -220,7 +220,6 @@ simple_train() {
     HEADS=8
     WARMUP=4000
     DROPOUT=0.1
-    VOCAB=500
     EXPERIMENT_DIR="./data/${LAN}"
     time preprocess "${EXPERIMENT_DIR}" $VOCAB
     time train_generate_evaluate "${EXPERIMENT_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
