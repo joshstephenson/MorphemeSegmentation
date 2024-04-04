@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Load configuration variables from train.conf
-source ./deepspin-3.conf
-source ../deepspin-shared.conf
+source ./deepspin-3.sh
+source ../deepspin-shared.sh
 
 readonly GRID_LOC=$MODEL_DIR
 
@@ -16,7 +16,7 @@ echo "GRID LOC: ${GRID_LOC}"
 echo "INPUT PATH: ${DATASET}"
 echo "OUT DIR: ${OUT_DIR}"
 
-VOCAB_DIR="./data/${LAN}/vocab-exp"
+VOCAB_DIR="./data/${LAN}"
 PREPROCESSED_DIR="${VOCAB_DIR}/in"
 OUT_DIR="${VOCAB_DIR}/out"
 RESULTS_DIR="${VOCAB_DIR}"
@@ -26,65 +26,65 @@ MODEL_DIR="${VOCAB_DIR}/models"
 # Preprocessing
 ###################
 
-preprocess() {
-    EXPERIMENT_DIR=$1; shift
-    VOCAB=$1; shift
-    if [ -z $VOCAB ]; then
-        >&2 echo "preprocess function needs 2 arguments: experiment directory and vocab size"
-        exit 1
-    fi
-    RESULTS_DIR="${EXPERIMENT_DIR}"
-    PREPROCESSED_DIR="${EXPERIMENT_DIR}/in"
-    OUT_DIR="${EXPERIMENT_DIR}/out"
-    MODEL_DIR="${EXPERIMENT_DIR}/models"
-    SOURCE_VOCAB="${OUT_DIR}/${SOURCE}.fairseq.vocab"
-    TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
-    if [ -f "${SOURCE_VOCAB}" ] && [ -f "${TARGET_VOCAB}" ]; then
-        echo "Looks like this configuration has already been preprocessed. Moving on..."
-        return
-    fi
-    mkdir -p "${PREPROCESSED_DIR}"
-    mkdir -p "${OUT_DIR}"
-    mkdir -p "${MODEL_DIR}"
-    log "Preprocessing..."
-    echo "EXPERIMENT DIR: ${EXPERIMENT_DIR}"
-    echo "VOCAB: $VOCAB"
-    # Hack for Mongolian
-    # Mongolian training set is in a sub-folder because it was a "surprise" language
-    if [ "${LAN}" == "mon" ]; then
-        DATASET2="${IN_DIR}/surprise/${LAN}.word"
-        TRAIN_FILE="${DATASET2}.train.tsv"
-        DEV_FILE="${DATASET2}.dev.tsv"
-    fi
-
-    # Run sentencepiece tokenizer script
-    # This is a key part of why the transformer works well
-    echo "${TRAIN_FILE}"
-    echo "${OUT_DIR}"
-    echo "${VOCAB}"
-    python ../tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${OUT_DIR}" --split train $@
-    if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
-    python ../tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir "${OUT_DIR}" --split dev --shared-data
-    if [ $? -ne 0 ]; then echo "Tokenizing dev failed" && exit 1 ; fi
-    python ../tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
-    if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
-
-    tail -n +4 "${OUT_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
-    tail -n +4 "${OUT_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
-    #cd "${PREPROCESSED_DIR}"
-    fairseq-preprocess \
-        --source-lang="${SOURCE}" \
-        --target-lang="${TARGET}" \
-        --trainpref="${OUT_DIR}/train" \
-        --validpref="${OUT_DIR}/dev" \
-        --testpref="${OUT_DIR}/test" \
-        --tokenizer=space \
-        --thresholdsrc=1 \
-        --thresholdtgt=1 \
-        --srcdict "${SOURCE_VOCAB}" \
-        --tgtdict "${TARGET_VOCAB}" \
-        --destdir="${OUT_DIR}"
-}
+#preprocess() {
+#    EXPERIMENT_DIR=$1; shift
+#    VOCAB=$1; shift
+#    if [ -z $VOCAB ]; then
+#        >&2 echo "preprocess function needs 2 arguments: experiment directory and vocab size"
+#        exit 1
+#    fi
+#    RESULTS_DIR="${EXPERIMENT_DIR}"
+#    PREPROCESSED_DIR="${EXPERIMENT_DIR}/in"
+#    OUT_DIR="${EXPERIMENT_DIR}/out"
+#    MODEL_DIR="${EXPERIMENT_DIR}/models"
+#    SOURCE_VOCAB="${OUT_DIR}/${SOURCE}.fairseq.vocab"
+#    TARGET_VOCAB="${OUT_DIR}/${TARGET}.fairseq.vocab"
+#    if [ -f "${SOURCE_VOCAB}" ] && [ -f "${TARGET_VOCAB}" ]; then
+#        echo "Looks like this configuration has already been preprocessed. Moving on..."
+#        return
+#    fi
+#    mkdir -p "${PREPROCESSED_DIR}"
+#    mkdir -p "${OUT_DIR}"
+#    mkdir -p "${MODEL_DIR}"
+#    log "Preprocessing..."
+#    echo "EXPERIMENT DIR: ${EXPERIMENT_DIR}"
+#    echo "VOCAB: $VOCAB"
+#    # Hack for Mongolian
+#    # Mongolian training set is in a sub-folder because it was a "surprise" language
+#    if [ "${LAN}" == "mon" ]; then
+#        DATASET2="${IN_DIR}/surprise/${LAN}.word"
+#        TRAIN_FILE="${DATASET2}.train.tsv"
+#        DEV_FILE="${DATASET2}.dev.tsv"
+#    fi
+#
+#    # Run sentencepiece tokenizer script
+#    # This is a key part of why the transformer works well
+#    echo "${TRAIN_FILE}"
+#    echo "${OUT_DIR}"
+#    echo "${VOCAB}"
+#    python ../tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${OUT_DIR}" --split train $@
+#    if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
+#    python ../tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir "${OUT_DIR}" --split dev --shared-data
+#    if [ $? -ne 0 ]; then echo "Tokenizing dev failed" && exit 1 ; fi
+#    python ../tokenize.py "${GOLD_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${OUT_DIR}/${SOURCE}" --existing-tgt-spm "${OUT_DIR}/${TARGET}" --out-dir $OUT_DIR --split test --shared-data
+#    if [ $? -ne 0 ]; then echo "Tokenizing test.gold failed" && exit 1 ; fi
+#
+#    tail -n +4 "${OUT_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
+#    tail -n +4 "${OUT_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
+#    #cd "${PREPROCESSED_DIR}"
+#    fairseq-preprocess \
+#        --source-lang="${SOURCE}" \
+#        --target-lang="${TARGET}" \
+#        --trainpref="${OUT_DIR}/train" \
+#        --validpref="${OUT_DIR}/dev" \
+#        --testpref="${OUT_DIR}/test" \
+#        --tokenizer=space \
+#        --thresholdsrc=1 \
+#        --thresholdtgt=1 \
+#        --srcdict "${SOURCE_VOCAB}" \
+#        --tgtdict "${TARGET_VOCAB}" \
+#        --destdir="${OUT_DIR}"
+#}
 
 ###################
 # Training
@@ -213,6 +213,18 @@ vocab_grid() {
     done
     exit
 }
+simple_train() {
+    EMB=256
+    HID=1024
+    LAYERS=6
+    HEADS=8
+    WARMUP=4000
+    DROPOUT=0.1
+    VOCAB=500
+    EXPERIMENT_DIR="./data/${LAN}"
+    preprocess "${EXPERIMENT_DIR}" $VOCAB
+    train_generate_evaluate "${EXPERIMENT_DIR}" $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCHES
+}
 
 train_grid() {
     grid 256 1024 6 8
@@ -280,7 +292,7 @@ evaluate() {
     fi
 }
 
-vocab_grid
+simple_train
 exit 0
 if [ "$(ls -A $OUT_DIR)" ]; then
     echo "PROCESSED DATA found in ${OUT_DIR}. Proceeding to training..."

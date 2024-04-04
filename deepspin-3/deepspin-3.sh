@@ -7,4 +7,3 @@ readonly ARCH=transformer
 readonly ACTIVATION_FN=relu
 readonly PATIENCE=5
 readonly WARMUP_INIT_LR=1e-7
-VOCAB=6000 # No longer unexplored. Experiment for Hungarian showed that 200 is plenty. Leaving as 6000 for now.
