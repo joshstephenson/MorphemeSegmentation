@@ -178,7 +178,7 @@ train_generate_evaluate() {
         train $EXPERIMENT_DIR $EMB $HID $LAYERS $HEADS $WARMUP $DROPOUT $BATCH
         generate $EXPERIMENT_DIR test
         evaluate $EXPERIMENT_DIR test
-        echo "Trained data written to: ${FILENAME}"
+        echo "Results written to: ${FILENAME}"
     fi
 }
 
@@ -251,7 +251,7 @@ generate() {
         log "Generating predictions..."
         # Makes raw predictions.
         fairseq-generate \
-            "${OUT_FILE}" \
+            "${PREPROCESSED_DIR}" \
             --source-lang="${SOURCE}" \
             --target-lang="${TARGET}" \
             --path="${CHECKPOINT}" \
@@ -261,7 +261,7 @@ generate() {
             --batch-size 256 \
             > "${OUT_FILE}"
         if [ $? -ne 0 ]; then
-            echo "fairseq-train failed."
+            echo "fairseq-generate failed."
             exit 1
         fi
     else
