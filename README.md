@@ -3,7 +3,7 @@ Morpheme segmentation is the process of separating words into their fundamental 
 
 - **foundationalism** &rarr; **found**+**ation**+**al**+**ism**
 
-This project is an attempt at reproducing the 2nd and 1st place systems from the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) in word segmentation. These systems, from Ben Peters and Andre Martins are [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model.
+This project is a reproduction of the 2nd and 1st place systems from the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) in word segmentation. These systems, from Ben Peters and Andre Martins are [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model with character-level tokenization, and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model with subword tokenization via [sentencepiece](https://github.com/google/sentencepiece).
 
 ### Organization
 This repository is organized as such:
