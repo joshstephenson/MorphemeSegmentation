@@ -68,11 +68,11 @@ decode() {
     # Bash won't overwrite the file
     # It's fine to regenerate
     if [ -f "${OUT_FILE}" ]; then
-        log "${OUT_FILE} found. Proceeding..."
+        log "${OUT_FILE} found. Skipping fairseq-generate..."
     else
         log "Decoding..."
         fairseq-generate \
-            "${OUT_DIR}" \
+            "${IN_DIR}" \
             --source-lang="${SOURCE}" \
             --target-lang="${TARGET}" \
             --path="${CHECKPOINT}" \
