@@ -119,32 +119,17 @@ tokenize_subwords() {
 
     tail -n +4 "${PREPROCESSED_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
     tail -n +4 "${PREPROCESSED_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
-    #cd "${PREPROCESSED_DIR}"
-#    fairseq-preprocess \
-#        --source-lang="${SOURCE}" \
-#        --target-lang="${TARGET}" \
-#        --trainpref="${PREPROCESSED_DIR}/train" \
-#        --validpref="${PREPROCESSED_DIR}/dev" \
-#        --testpref="${PREPROCESSED_DIR}/test" \
-#        --tokenizer=space \
-#        --thresholdsrc=1 \
-#        --thresholdtgt=1 \
-#        --srcdict "${SOURCE_VOCAB}" \
-#        --tgtdict "${TARGET_VOCAB}" \
-#        --destdir="${PREPROCESSED_DIR}"
 }
 tokenize_chars() {
-    DICT_FILE="${OUT_DIR}/dict.${SOURCE}.txt"
-    if [ -f "${DICT_FILE}" ]; then
-        log "Files already preprocessed. Moving on..."
-        cd "${PREPROCESSED_DIR}"
-        return 0
-    fi
-    log "Preprocessing..."
+    log "Tokenizing..."
     for TASK in "train" "dev" "test" ; do
         for FILE in "${DATASET}.${TASK}.tsv"; do
             SOURCE_FILE="${PREPROCESSED_DIR}/${TASK}.${SOURCE}"
             TARGET_FILE="${PREPROCESSED_DIR}/${TASK}.${TARGET}"
+            if [ -s "${SOURCE_FILE}" ] && [ -s "${TARGET_FILE}" ]; then
+                log "Files already tokenized. Moving on..."
+                return 0
+            fi
             # Segment the source strings by separating each grapheme (char)
             cut -f 1 "${FILE}" | sed 's/./& /g' > "${SOURCE_FILE}"
             # Segment the target strings by separating each morph
@@ -177,7 +162,6 @@ preprocess() {
 
     echo "Moving on to fairseq-preprocess"
 
-    # REMOVE previously preprocessed files or fairseq will exit 1
     TXT_FILE1="${PREPROCESSED_DIR}/dict.${SOURCE}.txt"
     TXT_FILE2="${PREPROCESSED_DIR}/dict.${TARGET}.txt"
     if [ -f "${TXT_FILE1}" ] || [ -f "${TXT_FILE2}" ] ; then
@@ -187,18 +171,6 @@ preprocess() {
         #rm "${TXT_FILE1}" "${TXT_FILE2}" > /dev/null 2>&1
     fi
 
-#    pushd . # save whatever directory we are currently in
-#    cd "${PREPROCESSED_DIR}"
-#    fairseq-preprocess \
-#        --source-lang="${SOURCE}" \
-#        --target-lang="${TARGET}" \
-#        --trainpref=train \
-#        --validpref=dev \
-#        --testpref=test.gold \
-#        --tokenizer=space \
-#        --thresholdsrc=1 \
-#        --thresholdtgt=1 \
-#        --destdir="${OUT_DIR}"
     fairseq-preprocess \
         --source-lang="${SOURCE}" \
         --target-lang="${TARGET}" \
@@ -210,5 +182,4 @@ preprocess() {
         --thresholdtgt=1 \
         $EXTRA_ARGS \
         --destdir="${PREPROCESSED_DIR}"
-#    popd # go back to whatever directory we saved above
 }

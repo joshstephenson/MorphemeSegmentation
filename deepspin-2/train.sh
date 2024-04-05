@@ -27,11 +27,11 @@ fi
 
 train() {
     get_checkpoint
-    if [ -f "${CHECKPOINT}" ]; then
-        log "Checkpount found: ${CHECKPOINT}\nProceeding..."
+    if [ -s "${CHECKPOINT}" ]; then
+        log "Checkpount found: ${CHECKPOINT}\nSkipping training..."
     else
         log "Training..."
-        fairseq-train \
+        time fairseq-train \
             "${PREPROCESSED_DIR}/" \
             --save-dir="${MODEL_DIR}" \
             --source-lang="${SOURCE}" \
@@ -67,11 +67,11 @@ decode() {
     OUT_FILE="${OUT_DIR}/${MODE}-${BEAM}.out"
     # Bash won't overwrite the file
     # It's fine to regenerate
-    if [ -f "${OUT_FILE}" ]; then
+    if [ -s "${OUT_FILE}" ]; then
         log "${OUT_FILE} found. Skipping fairseq-generate..."
     else
         log "Decoding..."
-        fairseq-generate \
+        time fairseq-generate \
             "${PREPROCESSED_DIR}" \
             --source-lang="${SOURCE}" \
             --target-lang="${TARGET}" \
@@ -135,30 +135,26 @@ evaluate() {
     fi
 }
 
-preprocess "./data/${LAN}" $VOCAB
+time preprocess "./data/${LAN}" $VOCAB
 if [ $? -ne 0 ]; then
     echo "Preprocessing failed. Stopping here"
     exit 1
 fi
-echo "Preprocessing succeeded"
 train
 if [ $? -ne 0 ]; then
     echo "Training failed. Stopping here"
     exit 1
 fi
-echo "Training succeeded"
 decode
 if [ $? -ne 0 ]; then
     echo "It appears decoding failed. Check output."
     exit 1
 fi
-echo "Decoding succeeded"
 postprocess
 if [ $? -ne 0 ]; then
     echo "Postprocessing failed. Stopping here"
     exit 1
 fi
-echo "Postprocess succeeded"
 evaluate
 if [ $? -ne 0 ]; then
     echo "Evaluation failed. Stopping here"
