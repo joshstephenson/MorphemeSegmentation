@@ -72,7 +72,7 @@ decode() {
     else
         log "Decoding..."
         fairseq-generate \
-            "${IN_DIR}" \
+            "${PREPROCESSED_DIR}" \
             --source-lang="${SOURCE}" \
             --target-lang="${TARGET}" \
             --path="${CHECKPOINT}" \
