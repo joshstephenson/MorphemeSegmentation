@@ -3,7 +3,7 @@ Morpheme segmentation is the process of separating words into their fundamental 
 
 - **foundationalism** &rarr; **found**+**ation**+**al**+**ism**
 
-This project is an attempt at reproducing the 2nd and 1st place systems from the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) in word segmentation. These systems, from Ben Peters and Andre Martins are [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model.
+This project is a reproduction of the 2nd and 1st place systems from the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) in word segmentation. These systems, from Ben Peters and Andre Martins are [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model with character-level tokenization, and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model with subword tokenization via [sentencepiece](https://github.com/google/sentencepiece).
 
 ### Organization
 This repository is organized as such:
@@ -11,8 +11,8 @@ This repository is organized as such:
 baseline/
 baseline/bert       # simple BertTokenizer generator and evaluator
 baseline/morfessor  # simple Morfessor 2.0 trainer, generator, and evaluator
-deepspin-2          # streamlined implementation of DeepSpin-2, written by [Ben Peters](https://github.com/bpopeters), using fairseq and an LSTM architecture
-deepspin-3          # streamlined implementation of DeepSpin-3, written by [Ben Peters](https://github.com/bpopeters), using fairseq and a transformer architecture
+deepspin-2          # streamlined implementation of DeepSpin-2 with fairseq and an LSTM architecture
+deepspin-3          # streamlined implementation of DeepSpin-3 with fairseq and a transformer architecture
 lstm                # an LSTM architecture not built on fairseq (for academic purposes)
 ```
 
@@ -32,7 +32,7 @@ fülésztől	fül @@ész @@től	110
 After training, the model is expected to be able to receive just the first column (the untokenized word) and be able to separate it into morphemes, with the ` @@` morpheme separator. The final column, which can be used for training has 3 bits that represent the types of morphology (inflection, derivation, & compounding).
 
 ### Setup
-- Make sure to clone this with `--recuse-submodules` to ensure you get the data from the competition.
+- Make sure to clone this with `--recurse-submodules` to ensure you get the data from the competition.
 - After creating a virtual environment with `python -m venv <name>`, you can install necessary python libraries with `pip install -r requirements.txt` from the root directory of this repository.
 
 ### Configuration
