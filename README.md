@@ -11,9 +11,10 @@ This repository is organized as such:
 baseline/
 baseline/bert       # simple BertTokenizer generator and evaluator
 baseline/morfessor  # simple Morfessor 2.0 trainer, generator, and evaluator
-deepspin-2          # streamlined implementation of DeepSpin-2 with fairseq and an LSTM architecture
-deepspin-3          # streamlined implementation of DeepSpin-3 with fairseq and a transformer architecture
-lstm                # an LSTM architecture not built on fairseq (for academic purposes)
+deepspin-2          # streamlined implementation of DeepSpin-2 with (fairseq)[https://github.com/facebookresearch/fairseq] and an LSTM architecture
+deepspin-3          # streamlined implementation of DeepSpin-3 with (fairseq)[https://github.com/facebookresearch/fairseq] and a transformer architecture
+yoyodyne            # A basic implementation using (yoyodyne)[https://github.com/CUNY-CL/yoyodyne]
+lstm                # an LSTM architecture not built with basic PyTorch (for academic purposes)
 ```
 
 1. The `baseline` directory has 2 scripts for generating baseline segmentations. One uses a pretrained BertTokenizer (`baseline/bert`) and the other uses Morfessor 2.0 (`baseline/morfessor`), an unsupervised utility that is not pretrained.
