@@ -32,11 +32,6 @@ class Trainer():
             train_loss = self._train(i, writer, args)
             valid_loss = self._validate(i, writer, args)
 
-            # learning_rate = self.scheduler.get_last_lr()
-            # self.logger.info(f'Learning rate is now: {learning_rate}')
-
-            #            if valid_loss < best_valid_loss:
-            #                best_valid_loss = valid_loss
             logger.info(f"\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
             logger.info(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
 
@@ -110,9 +105,9 @@ class Trainer():
                 pbar.set_description(f"{dataset.label}. Loss: {loss:.3f} (batch), {epoch_loss:.3f} (epoch)")
         return epoch_loss / len(dataset.loader)
 
-def main():
+def main(args):
     trainer = Trainer(dropout = config['encoder_decoder']['dropout'])
-    trainer.run()
+    trainer.run(args)
 
 
 if __name__ == '__main__':
