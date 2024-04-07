@@ -37,7 +37,7 @@ class Trainer():
 
             # self.model.load_from_file(self.model.model_file)
 
-            test_loss = self._validate(i, writer, use_test = True)
+            test_loss = self._validate(i, writer, args, use_test = True)
             logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
             # Nothing will occur here if early_stopping is False in config.yaml
