@@ -111,7 +111,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generator')
-    parser.add_argument("--disable-tqdm", type=bool, default=False, help='Whether to load tensors to CPU')
+    parser = argparse.ArgumentParser(description='LSTM Trainer')
+    parser.add_argument("--disable-tqdm", action="store_true", default=False, help='Whether to load tensors to CPU')
     opt = parser.parse_args()
     main(opt)

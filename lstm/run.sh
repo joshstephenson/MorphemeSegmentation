@@ -9,7 +9,7 @@ do
         SHOULD_TRAIN=false
         echo "Skipping training"
     elif [ "${arg}" == '--disable-tqdm' ]; then
-        ARGS=arg
+        ARGS=$arg
         echo "Disabling progress bar"
     fi
 done
