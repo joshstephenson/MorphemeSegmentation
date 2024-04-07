@@ -33,15 +33,14 @@ def segment_word(word, model, dataset, device, max_output_length=config['predict
                 if predicted_token == morph_vocab[EOS_TOKEN]:
                     last_index = -1
                     break
-                tokens = morph_vocab.lookup_tokens(inputs)
             else:
                 morph_dict = {i: v for i,v in enumerate(morph_vocab.get_itos())}
                 word_dict = {i: v for i,v in enumerate(word_vocab.get_itos())}
                 logger.critical(f'MORPHS: {morph_dict}')
                 logger.critical(f'WORDS: {word_dict}')
                 logger.critical(f'word: {"".join(word)}, indices: {inputs} -> {predicted_token}')
-                exit(1)
 
+        tokens = morph_vocab.lookup_tokens(inputs)
         prediction = "".join(tokens[1:last_index])
     return prediction
 
@@ -60,7 +59,7 @@ def main(config, file, use_cpu=False):
             for word, morphs in tqdm(dataset[:], total=len(data.test.words), desc=description):
                 pred = segment_word(word, model, dataset, device)
                 pred = postprocess(pred)
-                line = "".join(word[1:-1]) + '\t' + pred
+                line = "".join(word) + '\t' + pred
                 f.write(line + "\n")
 
     pred_file = file.replace(config['model_ext'], config['predictions_ext'])
