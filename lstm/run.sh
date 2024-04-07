@@ -1,10 +1,23 @@
 #!/usr/bin/env bash
 #
 
-SKIP_TRAIN=$1
-if [ "${SKIP_TRAIN}" != '--skip' ]; then
-    python train.py
+SHOULD_TRAIN=true
+ARGS=''
+for arg in $@
+do
+    if [ "${arg}" == '--skip-train' ]; then
+        SHOULD_TRAIN=false
+        echo "Skipping training"
+    elif [ "${arg}" == '--disable-tqdm' ]; then
+        ARGS=arg
+        echo "Disabling progress bar"
+    fi
+done
+
+if [ "$SHOULD_TRAIN" == true ]; then
+    python train.py $ARGS
 fi
+
 if [ $? -eq 0 ]; then
     LAN=$(python config.py -l)
     FILE=$(python config.py)

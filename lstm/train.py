@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import argparse
+
 from morpheme_data import MorphemeDataLoader
 from models import *
 import numpy as np
@@ -21,14 +23,14 @@ class Trainer():
         self.optimizer = self.config.optimizer(self.model)
         self.criterion = self.config.criterion(self.data.train.pad_index)
 
-    def run(self):
+    def run(self, args):
         writer = SummaryWriter()
         num_trainable_params = sum([p.numel() for p in self.model.parameters()])
         logger.info(f'Trainable params: {num_trainable_params}')
         for i in range(config['training']['epochs']):
             logger.info(f"Epoch {i+1}")
-            train_loss = self._train(i, writer)
-            valid_loss = self._validate(i, writer)
+            train_loss = self._train(i, writer, args)
+            valid_loss = self._validate(i, writer, args)
 
             # learning_rate = self.scheduler.get_last_lr()
             # self.logger.info(f'Learning rate is now: {learning_rate}')
@@ -47,12 +49,12 @@ class Trainer():
         writer.close()
         self.model.save()
 
-    def _train(self, epoch, writer):
+    def _train(self, epoch, writer, args):
         kwargs = self.config['training']
         self.model.train()
         epoch_loss = 0
         # pbar = tqdm(self.data.train.word_count / config['preprocessing']['batch_size'], desc=self.data.train.label)
-        pbar = tqdm(self.data.train.loader, leave=False)
+        pbar = tqdm(self.data.train.loader, leave=False, disable=args.disable_tqdm)
         for i, batch in enumerate(pbar):
             word = batch["word_ids"].to(self.device)
             morphs = batch["morph_ids"].to(self.device)
@@ -80,11 +82,11 @@ class Trainer():
         logger.info(f'Batch {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
 
-    def _validate(self, epoch, writer, use_test = False):
+    def _validate(self, epoch, writer, use_test = False, args):
         self.model.eval()
         epoch_loss = 0
         dataset = self.data.test if use_test else self.data.validation
-        pbar = tqdm(dataset.loader)
+        pbar = tqdm(dataset.loader, disable=args.disable_tqdm)
         with torch.no_grad():
             for i, batch in enumerate(pbar):
                 word = batch["word_ids"].to(self.device)
@@ -114,4 +116,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Generator')
+    parser.add_argument("--disable-tqdm", type=bool, default=False, help='Whether to load tensors to CPU')
+    opt = parser.parse_args()
+    main(opt)
