@@ -82,7 +82,7 @@ class Trainer():
         logger.info(f'Batch {i}, loss: {loss.item()}: epoch: {epoch_loss}')
         return epoch_loss / len(self.data.train.loader)
 
-    def _validate(self, epoch, writer, use_test = False, args):
+    def _validate(self, epoch, writer, args, use_test = False):
         self.model.eval()
         epoch_loss = 0
         dataset = self.data.test if use_test else self.data.validation
