@@ -13,7 +13,7 @@ if [ $? -eq 0 ]; then
         echo "File doesn't exist: ${FILE}"
         exit 1
     fi
-    python generate.py "${FILE}"
+    python predict.py --file "${FILE}"
     GUESS_FILE=$(echo $FILE | sed 's/pt/tsv/g')
     RESULTS_FILE=$(echo $FILE | sed 's/pt/txt/g')
     #echo $GUESS_FILE
