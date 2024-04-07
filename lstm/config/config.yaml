@@ -36,7 +36,7 @@ predictions:
   max_output: 65 # length of longest morpheme string + 2
 
 special_tokens:
+  pad_token: <PAD>
   sos_token: <SOS>
   eos_token: <EOS>
-  pad_token: <PAD>
   unknown_token: <UNK>

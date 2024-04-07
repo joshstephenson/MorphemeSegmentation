@@ -17,11 +17,11 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 class Encoder(nn.Module):
-    def __init__(self, input_dim, dropout):
+    def __init__(self, input_dim, pad_index, dropout):
         super().__init__()
         self.hidden_dim = config['encoder_decoder']['hidden_dim']
         self.n_layers = config['encoder_decoder']['n_layers']
-        self.embedding = nn.Embedding(input_dim, config['encoder_decoder']['embedding_dim'])
+        self.embedding = nn.Embedding(input_dim, config['encoder_decoder']['embedding_dim'], padding_idx=pad_index)
         self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'],
                            config['encoder_decoder']['hidden_dim'],
                            config['encoder_decoder']['n_layers'],
@@ -40,12 +40,12 @@ class Encoder(nn.Module):
         return hidden, cell
 
 class Decoder(nn.Module):
-    def __init__(self, output_dim, dropout):
+    def __init__(self, output_dim, pad_index, dropout):
         super().__init__()
         self.output_dim = output_dim
         self.hidden_dim = config['encoder_decoder']['hidden_dim']
         self.n_layers = config['encoder_decoder']['n_layers']
-        self.embedding = nn.Embedding(output_dim, config['encoder_decoder']['embedding_dim'])
+        self.embedding = nn.Embedding(output_dim, config['encoder_decoder']['embedding_dim'], padding_idx=pad_index)
         bidirectional = config['encoder_decoder']['bidirectional']
         self.rnn = nn.LSTM(config['encoder_decoder']['embedding_dim'],
                            config['encoder_decoder']['hidden_dim'],
@@ -78,10 +78,10 @@ class Decoder(nn.Module):
         return prediction, hidden, cell
 
 class Seq2Seq(nn.Module):
-    def __init__(self, input_dim, output_dim, device, dropout = 0.2):
+    def __init__(self, input_dim, output_dim, device, pad_index, dropout = 0.2):
         super().__init__()
-        self.encoder = Encoder(input_dim, dropout)
-        self.decoder = Decoder(output_dim, dropout)
+        self.encoder = Encoder(input_dim, pad_index, dropout)
+        self.decoder = Decoder(output_dim, pad_index, dropout)
         self.device = device
         self.model_file = config.model_file()
         assert (

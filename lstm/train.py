@@ -16,7 +16,7 @@ class Trainer():
         self.logger = get_logger()
         self.data = MorphemeDataLoader(config)
         self.device = config.device()  # Look for Metal GPU device (for Silicon Macs) and default to CUDA (for hosted GPU service)
-        self.model = Seq2Seq(self.data.train.word_len, self.data.train.morph_len, self.device, dropout).to(self.device)
+        self.model = Seq2Seq(self.data.train.word_len, self.data.train.morph_len, self.device, self.data.train.pad_index, dropout).to(self.device)
         self.logger.info(self.model)
 
         # optimizer, scheduler = config.optimizer(model)

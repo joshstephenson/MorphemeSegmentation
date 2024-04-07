@@ -54,11 +54,13 @@ class MorphemeDataLoader:
                 self.words,
                 min_freq=config['preprocessing']['min_freq'],
                 specials=special_tokens,
+                special_first=True
             )
             self.morph_vocab = torchtext.vocab.build_vocab_from_iterator(
                 self.morphs,
                 min_freq=config['preprocessing']['min_freq'],
                 specials=special_tokens,
+                special_first=True
             )
 
             UNKNOWN_TOKEN = config['special_tokens']['unknown_token']
