@@ -47,7 +47,7 @@ def segment_word(word, model, dataset, device, max_output_length=config['predict
 def main(config, file, use_cpu=False):
     data = MorphemeDataLoader(config)
     device = torch.device('cpu') if use_cpu else config.device()
-    model = Seq2Seq(data.train.word_len, data.train.morph_len, device, config['encoder_decoder']['dropout']).to(device)
+    model = Seq2Seq(data.train.word_len, data.train.morph_len, device, data.train.pad_index, config['encoder_decoder']['dropout']).to(device)
     model.load_from_file(file)
     dataset = data.test
 

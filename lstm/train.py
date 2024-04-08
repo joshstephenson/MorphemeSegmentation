@@ -20,29 +20,35 @@ class Trainer():
         self.logger.info(self.model)
 
         # optimizer, scheduler = config.optimizer(model)
-        self.optimizer = self.config.optimizer(self.model)
+        self.optimizer, self.scheduler = self.config.optimizer(self.model)
         self.criterion = self.config.criterion(self.data.train.pad_index)
 
     def run(self, args):
         writer = SummaryWriter()
         num_trainable_params = sum([p.numel() for p in self.model.parameters()])
         logger.info(f'Trainable params: {num_trainable_params}')
+        lowest_valid_loss = float("inf")
         for i in range(config['training']['epochs']):
             logger.info(f"Epoch {i+1}")
             train_loss = self._train(i, writer, args)
             valid_loss = self._validate(i, writer, args)
+            if valid_loss < lowest_valid_loss:
+                lowest_valid_loss = valid_loss
+                self.model.save()
 
-            logger.info(f"\tTrain Loss: {train_loss:7.3f} | Train PPL: {np.exp(train_loss):7.3f}")
-            logger.info(f"\tValid Loss: {valid_loss:7.3f} | Valid PPL: {np.exp(valid_loss):7.3f}")
+            logger.info(f"\tTrain Loss: {train_loss:7.9f} | Train PPL: {np.exp(train_loss):7.3f}")
+            logger.info(f"\tValid Loss: {valid_loss:7.9f} | Valid PPL: {np.exp(valid_loss):7.3f}")
 
+            self.scheduler.step(valid_loss)
+            logger.info(f"\tEpoch {i+1}, learning rate: {self.scheduler.get_last_lr()}")
             # self.model.load_from_file(self.model.model_file)
 
             test_loss = self._validate(i, writer, args, use_test = True)
-            logger.info(f"| Test Loss: {test_loss:.3f} | Test PPL: {np.exp(test_loss):7.3f} |")
+            logger.info(f"| Test Loss: {test_loss:.9f} | Test PPL: {np.exp(test_loss):7.3f} |")
 
             # Nothing will occur here if early_stopping is False in config.yaml
         writer.close()
-        self.model.save()
+        # self.model.save()
 
     def _train(self, epoch, writer, args):
         kwargs = self.config['training']
@@ -55,7 +61,6 @@ class Trainer():
             morphs = batch["morph_ids"].to(self.device)
             # word = [word length, batch size]
             # morphs = [morphs length, batch size]
-            self.optimizer.zero_grad()
             output = self.model(word, morphs, kwargs['teacher_forcing_ratio'])
             # output = [morphs length, batch size, morphs vocab size]
             output_dim = output.shape[-1]
@@ -65,6 +70,7 @@ class Trainer():
             # morphs = [(morphs length - 1) * batch size]
             loss = self.criterion(output, morphs)
             epoch_loss += loss.item()
+            self.optimizer.zero_grad()
             loss.backward()
             if i % 100 == 0:
                 writer.add_scalar('train-loss', loss, epoch_loss, epoch * len(self.data.train.loader) + i)
@@ -96,6 +102,9 @@ class Trainer():
                 morphs = morphs[1:].view(-1)
                 # morphs = [(morphs length - 1) * batch size]
                 loss = self.criterion(output, morphs)
+                for param_group in self.optimizer.param_groups:
+                    current_lr = param_group['lr']
+                    logger.info(f"Epoch: {epoch + 1}, Current Learning Rate: {current_lr}")
                 epoch_loss += loss.item()
                 if i % 100 == 0:
                     if use_test:

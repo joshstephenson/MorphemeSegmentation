@@ -48,9 +48,11 @@ class Config():
 
     def optimizer(self, model):
         if self['training']['weight_decay'] > 0:
-            return optim.Adam(model.parameters(), lr = self['training']['learning_rate'], weight_decay=self['training']['weight_decay'])
+            opt = optim.Adam(model.parameters(), lr = self['training']['learning_rate'], weight_decay=self['training']['weight_decay'])
         else:
-            return optim.Adam(model.parameters(), lr=self['training']['learning_rate'])
+            opt = optim.Adam(model.parameters(), lr=self['training']['learning_rate'])
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(opt, factor = self['training']['learning_rate_factor'], patience = self['training']['patience'], min_lr=self['training']['learning_rate_min'])
+        return opt, scheduler
 
     def criterion(self, pad_index):
         match self['training']['loss_criterion']:
