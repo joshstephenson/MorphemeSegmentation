@@ -10,7 +10,7 @@ To train, segment and evaluate use:
 
 The default tokenization for this project is character level. To use subword level with a vocab size of 6000, set the following environment variable:
 ```
-./run.sh <language code> <architecture> <tokenization>
+./run.sh <language code> <architecture> <tokenization> <OPTIONAL: subword vocab size>
 ```
 Example:
 ```
@@ -19,6 +19,8 @@ Example:
 # OR
 ./run.sh hun lstm subwords
 ./run.sh hun transformer chars
+# OR to change subword vocab target size:
+./run.sh hun lstm subwords 200 # Default will be 6000
 ```
 
 Language options include:
