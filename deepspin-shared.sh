@@ -166,7 +166,7 @@ tokenize_chars() {
     done
 }
 preprocess() {
-    if [ "$SUBWORDS" == "subwords" ] # Allow user to set this in env
+    if [ "$TOKENIZATION" == "subwords" ] # Allow user to set this in env
     then
         tokenize_subwords
         SOURCE_VOCAB="${PREPROCESSED_DIR}/${SOURCE}.fairseq.vocab"
