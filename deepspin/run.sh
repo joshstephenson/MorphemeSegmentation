@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
+# ##########################################################################################################################
+# Allows running of DeepSPIN-2 (LSTM with character level tokenization) or DeepSPIN-3 (Transformer with subword tokenization)
+# or any other combination (LSTM with subwords)
+#
+# Invoke:
+#   $ ./run.sh <language code> <architecture> <tokenization>
+#   language code options: ces, eng, fra, hun, ita, lat, mon, rus, spa
+#   architecture options:  lstm, transformer
+#   tokenization options:  subword, char (default)
+# ##########################################################################################################################
 
-source ../deepspin-shared.sh
+source ./deepspin.sh
 
 time preprocess
 if [ $? -ne 0 ]; then

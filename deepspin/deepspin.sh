@@ -1,21 +1,14 @@
-#!/usr/bin/env bash
-# Allows running of DeepSPIN-2 (LSTM with character level tokenization) or DeepSPIN-3 (Transformer with subword tokenization)
-# or any other combination (LSTM with subwords)
-#
-# Invoke:
-#   $ ./train.sh <language code> <architecture> <tokenization>
-#   language code options: ces, eng, fra, hun, ita, lat, mon, rus, spa
-#   architecture options:  lstm, transformer
-#   tokenization options:  subword, char (default)
-LAN=$1
-ARCH=$2
-TOKENIZATION=$3
-MODE=test
-
+# ##########################################################################################################################
+# WARNING: Do not run this script directly. See run.sh
+# ##########################################################################################################################
 if [ "$#" -lt 3 ]; then
     echo "Must provide language, architecture (lstm|transformer) and subword tokenization(chars|subwords) arguments"
     exit 0
 fi
+LAN=$1
+ARCH=$2
+TOKENIZATION=$3
+MODE=test
 
 while { test "$TOKENIZATION" != "chars"  && test "$TOKENIZATION" != "subwords"; }; do
     echo "Tokenization argument must be one of 'chars' or 'subwords'"
@@ -69,8 +62,7 @@ readonly LR=0.001
 readonly CLIP_NORM=1.
 readonly EMBED_DIM=256
 
-# FOR TRANSFORMER ONLY
-
+# For LSTM only
 if [ "${ARCH}" == "lstm" ]; then
     readonly MAX_UPDATE=4000
     readonly SAVE_INTERVAL=5
@@ -78,7 +70,8 @@ if [ "${ARCH}" == "lstm" ]; then
     readonly LABEL_SMOOTHING=.1
     readonly DROPOUT=.3
     readonly HIDDEN_DIM=256
-else # Transformer
+# For Transformer only
+else
     readonly SAVE_INTERVAL=1
     readonly MAX_UPDATE=400000
     readonly LR_SCHEDULER="inverse_sqrt"
@@ -99,13 +92,16 @@ OUT_FILE="${PREFIX}.out"
 PRED_FILE="${PREFIX}.pred"
 GUESS_FILE="${PREFIX}.guess"
 RESULTS_FILE="${PREFIX}.results"
-
 VOCAB=6000 # No longer unexplored. Experiment for Hungarian showed that 200 is plenty.
 
 mkdir -p "$IN_DIR"
 mkdir -p "$PREPROCESSED_DIR"
 mkdir -p "$OUT_DIR"
 mkdir -p "$MODEL_DIR"
+
+###################
+# Helpers functions
+###################
 
 get_checkpoint() {
     MODEL_DIR=$1
@@ -125,6 +121,10 @@ log() {
     printf '=%.0s' {1..80}
     printf "\n${1}\n"
 }
+
+########################
+# Step 1. Tokenization
+########################
 
 tokenize_subwords() {
     SOURCE_VOCAB="${PREPROCESSED_DIR}/${SOURCE}.fairseq.vocab"
@@ -167,6 +167,11 @@ tokenize_chars() {
         done
     done
 }
+
+#########################
+# Step 2. Preprocessing
+#########################
+
 preprocess() {
     if [ "$TOKENIZATION" == "subwords" ] # Allow user to set this in env
     then
@@ -204,6 +209,11 @@ preprocess() {
         exit 1
     fi
 }
+
+#########################
+# Step 3. Training
+#########################
+
 train_lstm() {
     log "LSTM Training..."
     time fairseq-train \
@@ -289,6 +299,11 @@ train() {
         fi
     fi
 }
+
+#########################
+# Step 4. Prediction
+#########################
+
 predict() {
     CHECKPOINT=$(get_checkpoint "${MODEL_DIR}")
     EXTRA_ARGS=""
@@ -319,6 +334,10 @@ predict() {
     postprocess
 }
 
+#########################
+# Step 4b. Postprocessing
+#########################
+
 postprocess() {
     # Extracts the predictions into a TSV file.
     # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
@@ -339,6 +358,11 @@ postprocess() {
     # and the generated prediction as the second column and output to .guess file
     cut -f 1 "${GOLD_FILE}" | paste - "${PRED_FILE}" > "${GUESS_FILE}"
 }
+
+#########################
+# Step 5. Evaluation
+#########################
+
 evaluate() {
     log "Evaluating..."
     python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS_FILE}" > "${RESULTS_FILE}"
