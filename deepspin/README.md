@@ -1,20 +1,24 @@
+## About
+
+This allows for training and predicting morphemes on the 2022SigmorphonST task using either an LSTM or Transformer architecture, along with either a character-level tokenization or a subword tokenization (via sentencepiece).
+
 ## Training and Evaluation
 To train, segment and evaluate use:
 ```
-./train.sh <language code>
+./run.sh <language code>
 ```
 
 The default tokenization for this project is character level. To use subword level with a vocab size of 6000, set the following environment variable:
 ```
-./train.sh <language code> <architecture> <tokenization>
+./run.sh <language code> <architecture> <tokenization>
 ```
 Example:
 ```
-./train.sh hun lstm chars
-./train.sh hun transformer subwords
+./run.sh hun lstm chars
+./run.sh hun transformer subwords
 # OR
-./train.sh hun lstm subwords
-./train.sh hun transformer chars
+./run.sh hun lstm subwords
+./run.sh hun transformer chars
 ```
 
 Language options include:
