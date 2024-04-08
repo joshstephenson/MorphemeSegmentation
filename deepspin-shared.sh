@@ -298,15 +298,16 @@ predict() {
         echo "Skipping generation..."
     else
         log "Generating predictions..."
+        REAL_PATH=$(realpath "${PREPROCESSED_DIR}")
         time fairseq-generate \
-            "${PREPROCESSED_DIR}" \
+            "${REAL_PATH}" \
             --source-lang="${SOURCE}" \
             --target-lang="${TARGET}" \
             --path="${CHECKPOINT}" \
-            --gen-subset="${FAIRSEQ_MODE}" \
+            --gen-subset="${MODE}" \
             --beam="${BEAM}" \
             --seed="${SEED}" \
-            $EXTRA_ARGS
+            $EXTRA_ARGS \
             > "${OUT_FILE}"
     fi
     if [ $? -ne 0 ]; then
