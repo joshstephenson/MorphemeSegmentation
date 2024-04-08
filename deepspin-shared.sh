@@ -45,12 +45,13 @@ else # Remote server doesn't have git command in task runner environment
 fi
 
 readonly EVALUATE_SCRIPT="${REPO_ROOT}/2022SegmentationST/evaluation/evaluate.py"
-readonly IN_DIR="${REPO_ROOT}/2022SegmentationST/data"
-readonly DATASET="${IN_DIR}/${LAN}.word"
+readonly DATA_DIR="${REPO_ROOT}/2022SegmentationST/data"
+readonly DATASET="${DATA_DIR}/${LAN}.word"
 
 # Allowing these to be overwritten for vocab experiments
 BASE_DIR="./data/${LAN}-${ARCH}-${TOKENIZATION}"
-PREPROCESSED_DIR="${BASE_DIR}/in"
+IN_DIR="${BASE_DIR}/in"
+PREPROCESSED_DIR="${BASE_DIR}/preprocessed"
 OUT_DIR="${BASE_DIR}/out"
 MODEL_DIR="${BASE_DIR}/models"
 CHECKPOINT_BEST="${MODEL_DIR}/checkpoint_best.pt"
@@ -101,6 +102,7 @@ RESULTS_FILE="${PREFIX}.results"
 
 VOCAB=6000 # No longer unexplored. Experiment for Hungarian showed that 200 is plenty.
 
+mkdir -p "$IN_DIR"
 mkdir -p "$PREPROCESSED_DIR"
 mkdir -p "$OUT_DIR"
 mkdir -p "$MODEL_DIR"
@@ -178,8 +180,8 @@ preprocess() {
 
     echo "Moving on to fairseq-preprocess"
 
-    DICT_SOURCE="${PREPROCESSED_DIR}/dict.${SOURCE}.txt"
-    DICT_TARGET="${PREPROCESSED_DIR}/dict.${TARGET}.txt"
+    DICT_SOURCE="${IN_DIR}/dict.${SOURCE}.txt"
+    DICT_TARGET="${IN_DIR}/dict.${TARGET}.txt"
     if [ -f "${DICT_SOURCE}" ] || [ -f "${DICT_TARGET}" ] ; then
         echo "Previously preprocessed files found: ${DICT_SOURCE} ${DICT_TARGET}"
         echo "Remove them if you wish to re-preprocess. Skipping for now..."
@@ -196,7 +198,7 @@ preprocess() {
         --thresholdsrc=1 \
         --thresholdtgt=1 \
         $EXTRA_ARGS \
-        --destdir="${PREPROCESSED_DIR}"
+        --destdir="${IN_DIR}"
     if [ $? -ne 0 ]; then
         echo "fairseq-preprocess failed."
         exit 1
@@ -205,7 +207,7 @@ preprocess() {
 train_lstm() {
     log "LSTM Training..."
     time fairseq-train \
-        "${PREPROCESSED_DIR}/" \
+        "${IN_DIR}/" \
         --save-dir="${MODEL_DIR}" \
         --source-lang="${SOURCE}" \
         --target-lang="${TARGET}" \
@@ -237,7 +239,7 @@ train_lstm() {
 train_transformer() {
     log "Transformer Training..."
     time fairseq-train \
-    "${PREPROCESSED_DIR}/" \
+    "${IN_DIR}/" \
     --save-dir="${MODEL_DIR}" \
     --source-lang="${SOURCE}" \
     --target-lang="${TARGET}" \
@@ -298,7 +300,7 @@ predict() {
         echo "Skipping generation..."
     else
         log "Generating predictions..."
-        REAL_PATH=$(realpath "${PREPROCESSED_DIR}")
+        REAL_PATH=$(realpath "${IN_DIR}")
         time fairseq-generate \
             "${REAL_PATH}" \
             --source-lang="${SOURCE}" \
