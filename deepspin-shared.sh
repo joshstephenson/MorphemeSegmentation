@@ -22,6 +22,9 @@ fi
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
 readonly ARCH=$(echo $ARCH | tr '[:upper:]' '[:lower:]')
 readonly TOKENIZATION=$(echo $TOKENIZATION | tr '[:upper:]' '[:lower:]')
+echo "LANGUAGE: ${LAN}"
+echo "ARCH: ${ARCH}"
+echo "TOKENIZATION: ${TOKENIZATION}"
 
 if [ -z "${LAN}" ]; then
     echo "Please provide a language code. Options {ces|eng|fra|hun|ita|lat|mon|rus|spa}."
@@ -281,7 +284,6 @@ train() {
     fi
 }
 predict() {
-    DATASET=$1
     CHECKPOINT=$(get_checkpoint "${MODEL_DIR}")
     EXTRA_ARGS=""
     if [ "$ARCH" == "transformer" ]; then
