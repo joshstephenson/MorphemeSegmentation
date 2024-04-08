@@ -11,12 +11,16 @@ LAN=$1
 ARCH=$2
 TOKENIZATION=$3
 MODE=test
-if [ -z "${TOKENIZATION}" ]; then TOKENIZATION="chars"; else TOKENIZATION="subwords"; fi
 
-if [ "$#" -lt 2 ]; then
-    echo "Must provide language, architecture (lstm|transformer) and subword tokenization(1|0) arguments"
+if [ "$#" -lt 3 ]; then
+    echo "Must provide language, architecture (lstm|transformer) and subword tokenization(chars|subwords) arguments"
     exit 0
 fi
+
+while { test "$TOKENIZATION" != "chars"  && test "$TOKENIZATION" != "subwords"; }; do
+    echo "Tokenization argument must be one of 'chars' or 'subwords'"
+    exit 0
+done
 
 # sanitize the inputs
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
