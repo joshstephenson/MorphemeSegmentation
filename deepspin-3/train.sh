@@ -248,6 +248,22 @@ train_grid() {
 
 source ../deepspin-shared.sh
 time preprocess
+if [ $? -ne 0 ]; then
+    echo "Preprocessing failed."
+    exit 1
+fi
 time train
+if [ $? -ne 0 ]; then
+    echo "Training failed."
+    exit 1
+fi
 time predict
+if [ $? -ne 0 ]; then
+    echo "Predictions failed."
+    exit 1
+fi
 evaluate
+if [ $? -ne 0 ]; then
+    echo "Evaluation failed."
+    exit 1
+fi

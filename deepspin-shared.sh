@@ -306,7 +306,7 @@ predict() {
             --gen-subset="${FAIRSEQ_MODE}" \
             --beam="${BEAM}" \
             --seed="${SEED}" \
-            "${EXTRA_ARGS}"
+            $EXTRA_ARGS
             > "${OUT_FILE}"
     fi
     if [ $? -ne 0 ]; then
