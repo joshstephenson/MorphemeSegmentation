@@ -1,6 +1,28 @@
+#!/usr/bin/env bash
+# Allows running of DeepSPIN-2 (LSTM with character level tokenization) or DeepSPIN-3 (Transformer with subword tokenization)
+# or any other combination (LSTM with subwords)
+#
+# Invoke:
+#   $ ./train.sh <language code> <architecture> <tokenization>
+#   language code options: ces, eng, fra, hun, ita, lat, mon, rus, spa
+#   architecture options:  lstm, transformer
+#   tokenization options:  subword, char (default)
+LAN=$1
+ARCH=$2
+TOKENIZATION=$3
+MODE=test
+if [ -z "${TOKENIZATION}" ]; then TOKENIZATION="chars"; else TOKENIZATION="subwords"; fi
 
-LAN=$1 # Should match the name of the languages available in ../2022SegmentationST/data
+if [ "$#" -lt 2 ]; then
+    echo "Must provide language, architecture (lstm|transformer) and subword tokenization(1|0) arguments"
+    exit 0
+fi
+
+# sanitize the inputs
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
+readonly ARCH=$(echo $ARCH | tr '[:upper:]' '[:lower:]')
+readonly TOKENIZATION=$(echo $TOKENIZATION | tr '[:upper:]' '[:lower:]')
+
 if [ -z "${LAN}" ]; then
     echo "Please provide a language code. Options {ces|eng|fra|hun|ita|lat|mon|rus|spa}."
     exit 1
@@ -20,14 +42,13 @@ readonly IN_DIR="${REPO_ROOT}/2022SegmentationST/data"
 readonly DATASET="${IN_DIR}/${LAN}.word"
 
 # Allowing these to be overwritten for vocab experiments
-PREPROCESSED_DIR="./data/${LAN}/in"
-OUT_DIR="./data/${LAN}/out"
-RESULTS_DIR="./data/${LAN}"
-MODEL_DIR="./data/${LAN}/models"
+BASE_DIR="./data/${LAN}-${ARCH}-${TOKENIZATION}"
+PREPROCESSED_DIR="${BASE_DIR}/in"
+OUT_DIR="${BASE_DIR}/out"
+MODEL_DIR="${BASE_DIR}/models"
 CHECKPOINT_BEST="${MODEL_DIR}/checkpoint_best.pt"
 CHECKPOINT_LAST="${MODEL_DIR}/checkpoint_last.pt"
 GOLD_FILE="${DATASET}.test.gold.tsv"
-DICT_FILE="${OUT_DIR}/dict.${SOURCE}.txt"
 
 readonly TRAIN_FILE="${DATASET}.train.tsv"
 readonly DEV_FILE="${DATASET}.dev.tsv"
@@ -35,16 +56,52 @@ readonly SOURCE="src"
 readonly TARGET="tgt"
 readonly SEED=1917
 readonly BEAM=5
-readonly ENTMAX_ALPHA=1.5
 readonly OPTIMIZER=adam
 readonly LR=0.001
 readonly CLIP_NORM=1.
+readonly EMBED_DIM=256
+
+# FOR TRANSFORMER ONLY
+
+if [ "${ARCH}" == "lstm" ]; then
+    readonly MAX_UPDATE=4000
+    readonly SAVE_INTERVAL=5
+    readonly BATCH=256
+    readonly LABEL_SMOOTHING=.1
+    readonly DROPOUT=.3
+    readonly HIDDEN_DIM=256
+else # Transformer
+    readonly SAVE_INTERVAL=1
+    readonly MAX_UPDATE=400000
+    readonly LR_SCHEDULER="inverse_sqrt"
+    readonly BATCH=8192
+    readonly ACTIVATION_FN=relu
+    readonly PATIENCE=5
+    readonly WARMUP_INIT_LR=1e-7
+    readonly WARMUP=4000
+    readonly ENTMAX_ALPHA=1.5
+    readonly LAYERS=6
+    readonly HEADS=8
+    readonly DROPOUT=.1
+    readonly HIDDEN_DIM=1024
+fi
+DICT_FILE="${OUT_DIR}/dict.${SOURCE}.txt"
+PREFIX="${OUT_DIR}/${MODE}-${BEAM}"
+OUT_FILE="${PREFIX}.out"
+PRED_FILE="${PREFIX}.pred"
+GUESS_FILE="${PREFIX}.guess"
+RESULTS_FILE="${PREFIX}.results"
+
 VOCAB=6000 # No longer unexplored. Experiment for Hungarian showed that 200 is plenty.
 
 mkdir -p "$PREPROCESSED_DIR"
 mkdir -p "$OUT_DIR"
+mkdir -p "$MODEL_DIR"
 
 get_checkpoint() {
+    MODEL_DIR=$1
+    CHECKPOINT_BEST="${MODEL_DIR}/checkpoint_best.pt"
+    CHECKPOINT_LAST="${MODEL_DIR}/checkpoint_last.pt"
     if [ -f "${CHECKPOINT_BEST}" ]; then
         CHECKPOINT="${CHECKPOINT_BEST}"
     elif [ -f "${CHECKPOINT_LAST}" ]; then
@@ -52,6 +109,7 @@ get_checkpoint() {
     else
         CHECKPOINT=""
     fi
+    echo $CHECKPOINT
 }
 
 log() {
@@ -59,31 +117,6 @@ log() {
     printf "\n${1}\n"
 }
 
-postprocess() {
-    OUT_FILE=$1; shift
-    GOLD_FILE=$1; shift
-    PRED_FILE=$1; shift
-    GUESS_FILE=$1; shift
-
-    # Extracts the predictions into a TSV file.
-    # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
-    cat "${OUT_FILE}" | grep -P '^H-' | \
-        cut -c 3- | \
-        # sort them numerically
-        sort -n -k 1 | \
-        # print only the last field
-        awk -F "\t" '{print $NF}' | \
-        # Remove whitespace and then replace underscores with whitespace (order here matters)
-        sed -e 's/[[:space:]]*//g' -e 's/[▁_]/ /g' | \
-        # swap out the internal morph separator to the external one
-        sed -e 's/[[:space:]]*|/ @@/g' | \
-        # Strip leading whitespace from the tokenization above and redirect to prediction file
-        sed -e 's/^ //g' > "${PRED_FILE}"
-
-    # Now take the first column of the gold file (the input word) as the first column
-    # and the generated prediction as the second column and output to .guess file
-    cut -f 1 "${GOLD_FILE}" | paste - "${PRED_FILE}" > "${GUESS_FILE}"
-}
 tokenize_subwords() {
     SOURCE_VOCAB="${PREPROCESSED_DIR}/${SOURCE}.fairseq.vocab"
     TARGET_VOCAB="${PREPROCESSED_DIR}/${TARGET}.fairseq.vocab"
@@ -91,25 +124,10 @@ tokenize_subwords() {
         echo "Looks like this configuration has already been preprocessed. Moving on..."
         return
     fi
-    mkdir -p "${PREPROCESSED_DIR}"
-    mkdir -p "${MODEL_DIR}"
-    mkdir -p "${OUT_DIR}"
     log "Preprocessing..."
-    echo "EXPERIMENT DIR: ${EXPERIMENT_DIR}"
-    echo "VOCAB: $VOCAB"
-    # Hack for Mongolian
-    # Mongolian training set is in a sub-folder because it was a "surprise" language
-    if [ "${LAN}" == "mon" ]; then
-        DATASET2="${IN_DIR}/surprise/${LAN}.word"
-        TRAIN_FILE="${DATASET2}.train.tsv"
-        DEV_FILE="${DATASET2}.dev.tsv"
-    fi
 
     # Run sentencepiece tokenizer script
     # This is a key part of why the transformer works well
-    echo "${TRAIN_FILE}"
-    echo "${PREPROCESSED_DIR}"
-    echo "${VOCAB}"
     python ../tokenize.py "${TRAIN_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --out-dir "${PREPROCESSED_DIR}" --split train $@
     if [ $? -ne 0 ]; then echo "Tokenizing train failed" && exit 1 ; fi
     python ../tokenize.py "${DEV_FILE}" --src-tok-type spm --tgt-tok-type spm --vocab-size $VOCAB --existing-src-spm "${PREPROCESSED_DIR}/${SOURCE}" --existing-tgt-spm "${PREPROCESSED_DIR}/${TARGET}" --out-dir "${PREPROCESSED_DIR}" --split dev --shared-data
@@ -119,6 +137,7 @@ tokenize_subwords() {
 
     tail -n +4 "${PREPROCESSED_DIR}/${SOURCE}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${SOURCE_VOCAB}"
     tail -n +4 "${PREPROCESSED_DIR}/${TARGET}.vocab" | cut -f 1 | sed "s/$/ 100/g" > "${TARGET_VOCAB}"
+    log "Creating ${SOURCE_VOCAB} and ${TARGET_VOCAB} via sentencepiece"
 }
 tokenize_chars() {
     log "Tokenizing..."
@@ -140,17 +159,7 @@ tokenize_chars() {
     done
 }
 preprocess() {
-    EXPERIMENT_DIR=$1; shift
-    VOCAB=$1; shift
-    if [ -z $VOCAB ]; then
-        >&2 echo "preprocess function needs 2 arguments: experiment directory and vocab size"
-        exit 1
-    fi
-    RESULTS_DIR="${EXPERIMENT_DIR}"
-    PREPROCESSED_DIR="${EXPERIMENT_DIR}/in"
-    OUT_DIR="${EXPERIMENT_DIR}/out"
-    MODEL_DIR="${EXPERIMENT_DIR}/models"
-    if [ -n "${SUBWORDS}" ] # Allow user to set this in env
+    if [ "$SUBWORDS" == "subwords" ] # Allow user to set this in env
     then
         tokenize_subwords
         SOURCE_VOCAB="${PREPROCESSED_DIR}/${SOURCE}.fairseq.vocab"
@@ -162,13 +171,12 @@ preprocess() {
 
     echo "Moving on to fairseq-preprocess"
 
-    TXT_FILE1="${PREPROCESSED_DIR}/dict.${SOURCE}.txt"
-    TXT_FILE2="${PREPROCESSED_DIR}/dict.${TARGET}.txt"
-    if [ -f "${TXT_FILE1}" ] || [ -f "${TXT_FILE2}" ] ; then
-        echo "Previously preprocessed files found: ${TXT_FILE1} ${TXT_FILE2}"
+    DICT_SOURCE="${PREPROCESSED_DIR}/dict.${SOURCE}.txt"
+    DICT_TARGET="${PREPROCESSED_DIR}/dict.${TARGET}.txt"
+    if [ -f "${DICT_SOURCE}" ] || [ -f "${DICT_TARGET}" ] ; then
+        echo "Previously preprocessed files found: ${DICT_SOURCE} ${DICT_TARGET}"
         echo "Remove them if you wish to re-preprocess. Skipping for now..."
         return 0
-        #rm "${TXT_FILE1}" "${TXT_FILE2}" > /dev/null 2>&1
     fi
 
     fairseq-preprocess \
@@ -182,4 +190,152 @@ preprocess() {
         --thresholdtgt=1 \
         $EXTRA_ARGS \
         --destdir="${PREPROCESSED_DIR}"
+    if [ $? -ne 0 ]; then
+        echo "fairseq-preprocess failed."
+        exit 1
+    fi
+}
+train_lstm() {
+    log "LSTM Training..."
+    time fairseq-train \
+        "${PREPROCESSED_DIR}/" \
+        --save-dir="${MODEL_DIR}" \
+        --source-lang="${SOURCE}" \
+        --target-lang="${TARGET}" \
+        --disable-validation \
+        --seed="${SEED}" \
+        --arch=lstm \
+        --encoder-bidirectional \
+        --dropout="${DROPOUT}" \
+        --encoder-embed-dim="${EMBED_DIM}" \
+        --encoder-hidden-size="${HIDDEN_DIM}" \
+        --decoder-embed-dim="${EMBED_DIM}" \
+        --decoder-out-embed-dim="${EMBED_DIM}" \
+        --decoder-hidden-size="${HIDDEN_DIM}" \
+        --share-decoder-input-output-embed \
+        --criterion=label_smoothed_cross_entropy \
+        --label-smoothing="${LABEL_SMOOTHING}" \
+        --optimizer="${OPTIMIZER}" \
+        --lr="${LR}" \
+        --clip-norm="${CLIP_NORM}" \
+        --batch-size="${BATCH}" \
+        --max-update="${MAX_UPDATE}" \
+        --save-interval="${SAVE_INTERVAL}" \
+        --reset-optimizer # to make sure we get a checkpoint_best file
+    if [ $? -ne 0 ]; then
+        echo "fairseq-train failed."
+        exit 1
+    fi
+}
+train_transformer() {
+    log "Transformer Training..."
+    time fairseq-train \
+    "${PREPROCESSED_DIR}/" \
+    --save-dir="${MODEL_DIR}" \
+    --source-lang="${SOURCE}" \
+    --target-lang="${TARGET}" \
+    --seed="${SEED}" \
+    --arch=transformer \
+    --attention-dropout="${DROPOUT}" \
+    --activation-dropout="${DROPOUT}" \
+    --activation-fn="${ACTIVATION_FN}" \
+    --encoder-embed-dim="${EMBED_DIM}" \
+    --encoder-ffn-embed-dim="${HIDDEN_DIM}" \
+    --encoder-layers="${LAYERS}" \
+    --encoder-attention-heads="${HEADS}" \
+    --encoder-normalize-before \
+    --decoder-embed-dim="${EMBED_DIM}" \
+    --decoder-ffn-embed-dim="${HIDDEN_DIM}" \
+    --decoder-layers="${LAYERS}" \
+    --decoder-attention-heads="${HEADS}" \
+    --decoder-normalize-before \
+    --share-decoder-input-output-embed \
+    --criterion=entmax_loss \
+    --loss-alpha="${ENTMAX_ALPHA}" \
+    --optimizer="${OPTIMIZER}" \
+    --lr="${LR}" \
+    --lr-scheduler="${LR_SCHEDULER}" \
+    --warmup-init-lr="${WARMUP_INIT_LR}" \
+    --warmup-updates="${WARMUP}" \
+    --clip-norm="${CLIP_NORM}" \
+    --max-tokens="${BATCH}" \
+    --max-update="${MAX_UPDATE}" \
+    --save-interval="${SAVE_INTERVAL}" \
+    --patience="${PATIENCE}" \
+    --no-epoch-checkpoints
+    if [ $? -ne 0 ]; then
+        echo "fairseq-train failed."
+        exit 1
+    fi
+}
+train() {
+    CHECKPOINT=$(get_checkpoint "${MODEL_DIR}")
+    if [ -s "${CHECKPOINT}" ]; then
+        log "Checkpount found: ${CHECKPOINT}\nSkipping training..."
+    else
+        if [ "${ARCH}" == "lstm" ]; then
+            train_lstm
+        else
+            train_transformer
+        fi
+    fi
+}
+predict() {
+    DATASET=$1
+    CHECKPOINT=$(get_checkpoint "${MODEL_DIR}")
+    EXTRA_ARGS=""
+    if [ "$ARCH" == "transformer" ]; then
+        EXTRA_ARGS="--batch-size 256 --alpha=${ENTMAX_ALPHA} "
+    fi
+    if [ -s "${OUT_FILE}" ]; then
+        log "Looks like this configuration has already been generated: ${OUT_FILE}"
+        echo "Skipping generation..."
+    else
+        log "Generating predictions..."
+        time fairseq-generate \
+            "${PREPROCESSED_DIR}" \
+            --source-lang="${SOURCE}" \
+            --target-lang="${TARGET}" \
+            --path="${CHECKPOINT}" \
+            --gen-subset="${FAIRSEQ_MODE}" \
+            --beam="${BEAM}" \
+            --seed="${SEED}" \
+            "${EXTRA_ARGS}"
+            > "${OUT_FILE}"
+    fi
+    if [ $? -ne 0 ]; then
+        echo "fairseq-generate failed."
+        exit 1
+    fi
+    postprocess
+}
+
+postprocess() {
+    # Extracts the predictions into a TSV file.
+    # extract the 3rd to last column of the output from fairseq-generate only if the line starts with 'H-'
+    cat "${OUT_FILE}" | grep -P '^H-' | \
+        cut -c 3- | \
+        # sort them numerically
+        sort -n -k 1 | \
+        # print only the last field
+        awk -F "\t" '{print $NF}' | \
+        # Remove whitespace and then replace underscores with whitespace (order here matters)
+        sed -e 's/[[:space:]]*//g' -e 's/[▁_]/ /g' | \
+        # swap out the internal morph separator to the external one
+        sed -e 's/[[:space:]]*|/ @@/g' | \
+        # Strip leading whitespace from the tokenization above and redirect to prediction file
+        sed -e 's/^ //g' > "${PRED_FILE}"
+
+    # Now take the first column of the gold file (the input word) as the first column
+    # and the generated prediction as the second column and output to .guess file
+    cut -f 1 "${GOLD_FILE}" | paste - "${PRED_FILE}" > "${GUESS_FILE}"
+}
+evaluate() {
+    log "Evaluating..."
+    python $EVALUATE_SCRIPT --gold "${GOLD_FILE}" --guess "${GUESS_FILE}" > "${RESULTS_FILE}"
+    if [ $? -eq 0 ]; then
+        cat "${RESULTS_FILE}"
+    else
+        echo "Failed to evaluate model."
+    fi
 }

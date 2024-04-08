@@ -1,9 +1,0 @@
-readonly CRITERION=entmax_loss
-readonly MAX_UPDATE=400000
-readonly LR_SCHEDULER=inverse_sqrt
-readonly SAVE_INTERVAL=1
-readonly BATCHES=8192
-readonly ARCH=transformer
-readonly ACTIVATION_FN=relu
-readonly PATIENCE=5
-readonly WARMUP_INIT_LR=1e-7
