@@ -11,6 +11,20 @@
 # ##########################################################################################################################
 
 source ./deepspin.sh
+if [ "$#" -gt 0 ]; then
+    if [ "${TOKENIZATION}" == "subwords" ]; then
+        VOCAB=$1; shift
+        re='^[0-9]+$'
+        if ! [[ $VOCAB =~ $re ]]; then
+            echo "Vocab argument must be a number."
+            exit 1
+        fi
+        echo "Using custom VOCAB size of ${VOCAB}"
+    else
+        echo "Vocab argument is meaningless without subwords."
+        exit 1
+    fi
+fi
 
 time preprocess
 if [ $? -ne 0 ]; then

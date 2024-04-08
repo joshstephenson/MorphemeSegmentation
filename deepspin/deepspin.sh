@@ -5,9 +5,9 @@ if [ "$#" -lt 3 ]; then
     echo "Must provide language, architecture (lstm|transformer) and subword tokenization(chars|subwords) arguments"
     exit 0
 fi
-LAN=$1
-ARCH=$2
-TOKENIZATION=$3
+LAN=$1; shift
+ARCH=$1; shift
+TOKENIZATION=$1; shift
 MODE=test
 
 while { test "$TOKENIZATION" != "chars"  && test "$TOKENIZATION" != "subwords"; }; do
@@ -19,8 +19,9 @@ done
 readonly LAN=$(echo $LAN | tr '[:upper:]' '[:lower:]')
 readonly ARCH=$(echo $ARCH | tr '[:upper:]' '[:lower:]')
 readonly TOKENIZATION=$(echo $TOKENIZATION | tr '[:upper:]' '[:lower:]')
-echo "LANGUAGE: ${LAN}"
-echo "ARCH: ${ARCH}"
+printf '=%.0s' {1..80} && echo ""
+echo "LANGUAGE:     ${LAN}"
+echo "ARCH:         ${ARCH}"
 echo "TOKENIZATION: ${TOKENIZATION}"
 
 if [ -z "${LAN}" ]; then
