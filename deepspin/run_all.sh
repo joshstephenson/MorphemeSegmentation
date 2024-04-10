@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for lang in eng hun lat
+for lang in eng fra lat
 do
     for tokens in chars subwords
     do
