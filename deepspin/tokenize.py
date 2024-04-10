@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 """
+Author: Ben Peters
 This is the first part of the shared task pipeline. The input is raw shared
 task data stored as tsv files. The output is {train,dev,test}.{src,tgt} files
 containing that data, but with tokens separated by whitespace. The supported
