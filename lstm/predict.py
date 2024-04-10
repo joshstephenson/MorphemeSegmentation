@@ -59,7 +59,7 @@ def main(config, file, use_cpu=False):
             for word, morphs in tqdm(dataset[:], total=len(data.test.words), desc=description):
                 pred = segment_word(word, model, dataset, device)
                 pred = postprocess(pred)
-                line = "".join(word) + '\t' + pred
+                line = "".join(word[1:-1]) + '\t' + pred
                 f.write(line + "\n")
 
     pred_file = file.replace(config['model_ext'], config['predictions_ext'])
