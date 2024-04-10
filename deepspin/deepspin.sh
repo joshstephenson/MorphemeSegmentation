@@ -315,7 +315,6 @@ train_transformer() {
     --share-decoder-input-output-embed \
     --criterion=entmax_loss \
     --loss-alpha="${ENTMAX_ALPHA}" \
-    --criterion=label_smoothed_cross_entropy \
     --optimizer="${OPTIMIZER}" \
     --lr="${LR}" \
     --lr-scheduler="${LR_SCHEDULER}" \
