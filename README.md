@@ -3,7 +3,7 @@ Morpheme segmentation is the process of separating words into their fundamental 
 
 - **foundationalism** &rarr; **found**+**ation**+**al**+**ism**
 
-This project is a reproduction of the 2nd and 1st place systems from the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) in word segmentation. These systems, from Ben Peters and Andre Martins are [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model with character-level tokenization, and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model with subword tokenization via [sentencepiece](https://github.com/google/sentencepiece).
+This project is a reproduction of the 2nd and 1st place systems from the [2022 Sigmorphon competition](https://github.com/sigmorphon/2022SegmentationST/) in word segmentation. These systems, from [Ben Peters](https://github.com/bpopeters) and [Andre Martins](https://github.com/andre-martins), are [DeepSPIN-2](https://aclanthology.org/2022.sigmorphon-1.14/), a recurrent neural network (LSTM) model with character-level tokenization, and [DeepSPIN-3](https://aclanthology.org/2022.sigmorphon-1.14/) a transformer based model that uses an [entmax](https://github.com/deep-spin/entmax) loss function and [ULM subword tokenization](https://github.com/google/sentencepiece).
 
 ### Organization
 This repository is organized as such:
@@ -11,8 +11,8 @@ This repository is organized as such:
 baseline/
 baseline/bert       # simple BertTokenizer generator and evaluator
 baseline/morfessor  # simple Morfessor 2.0 trainer, generator, and evaluator
-deepspin            # flexible implementation of DeepSpin-2 and DeepSpin-3 with (fairseq)[https://github.com/facebookresearch/fairseq] and an LSTM architecture as outlined in the paper above.
-yoyodyne            # A basic implementation using (yoyodyne)[https://github.com/CUNY-CL/yoyodyne]
+deepspin            # flexible implementation of DeepSpin-2 and DeepSpin-3 with fairseq and an LSTM architecture as outlined in the paper above.
+yoyodyne            # A basic implementation using yoyodyne - https://github.com/CUNY-CL/yoyodyne
 lstm                # an LSTM work-in-progress architecture built with basic PyTorch (for academic purposes).
 ```
 
@@ -35,7 +35,7 @@ After training, the model is expected to be able to receive just the first colum
 - After creating a virtual environment with `python -m venv <name>` or `conda create...`, you can install necessary python libraries with `pip install -r requirements.txt` from the root directory of this repository.
 
 ### Training
-Please refer to README's within each subdirectory for training and evaluation of each individual project.
+Please refer to README's within each subdirectory for training and evaluation for each individual architecture.
 
 
 
