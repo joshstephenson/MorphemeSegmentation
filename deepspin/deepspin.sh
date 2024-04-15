@@ -93,6 +93,7 @@ if [ "${ARCH}" == "lstm" ]; then
     readonly LABEL_SMOOTHING=.1
     readonly DROPOUT=.3
     readonly HIDDEN_DIM=256
+    readonly ENTMAX_ALPHA=1.5
 # For Transformer only
 else
     readonly SAVE_INTERVAL=1
@@ -276,8 +277,10 @@ train_lstm() {
         --decoder-out-embed-dim="${EMBED_DIM}" \
         --decoder-hidden-size="${HIDDEN_DIM}" \
         --share-decoder-input-output-embed \
-        --criterion=label_smoothed_cross_entropy \
-        --label-smoothing="${LABEL_SMOOTHING}" \
+#        --criterion=label_smoothed_cross_entropy \
+#        --label-smoothing="${LABEL_SMOOTHING}" \
+        --criterion=entmax_loss \
+        --loss-alpha="${ENTMAX_ALPHA}" \
         --optimizer="${OPTIMIZER}" \
         --lr="${LR}" \
         --clip-norm="${CLIP_NORM}" \
