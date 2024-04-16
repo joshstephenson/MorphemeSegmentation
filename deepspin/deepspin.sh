@@ -277,17 +277,18 @@ train_lstm() {
         --decoder-out-embed-dim="${EMBED_DIM}" \
         --decoder-hidden-size="${HIDDEN_DIM}" \
         --share-decoder-input-output-embed \
-#        --criterion=label_smoothed_cross_entropy \
-#        --label-smoothing="${LABEL_SMOOTHING}" \
         --criterion=entmax_loss \
         --loss-alpha="${ENTMAX_ALPHA}" \
         --optimizer="${OPTIMIZER}" \
         --lr="${LR}" \
         --clip-norm="${CLIP_NORM}" \
-        --batch-size="${BATCH}" \
+        --max-tokens="${BATCH}" \
         --max-update="${MAX_UPDATE}" \
         --save-interval="${SAVE_INTERVAL}" \
         --reset-optimizer # to make sure we get a checkpoint_best file
+#        --batch-size="${BATCH}" \
+#        --criterion=label_smoothed_cross_entropy \
+#        --label-smoothing="${LABEL_SMOOTHING}" \
     if [ $? -ne 0 ]; then
         echo "fairseq-train failed."
         exit 1
