@@ -1,4 +1,6 @@
 ## Training and Evaluation
+This code is currently not functioning well. F-scores are around 50.
+
 To train this model use:
 ```
 python train.py
@@ -21,12 +23,4 @@ Language options include:
 To segment and evaluate the model use:
 ```
 python evaluate.py
-```
-output:
-```
-category: all
-distance	0.34
-f_measure	95.44
-precision	95.05
-recall	95.83
 ```
